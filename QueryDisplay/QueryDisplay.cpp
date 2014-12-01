@@ -28,16 +28,45 @@
 using namespace std;
 
 static const int MAX_IMAGES = 2;
+
 //Holds the index to the main window
 int main_window; 
 
 // pointers for all of the glui controls
 GLUI *glui;
 
+//Live Variables
+int numLinks = 10;
+float initAngle = 0.f;
+float length = 1.f;
+
+//State variables
+int drawInterpolatedSteps;
+int useContraints;
+
+const typedef enum{
+
+	CB_GRID_BUTTON,
+	CB_UPDATE_LINKS_BUTTON,
+
+	CB_NUMLINKS_SPINNER,
+	CB_INIT_ANGLE_SPINNER,
+	CB_INIT_LENGTH_SPINNER,
+
+	CB_DRAW_INTERPOLATED_STEPS_CHECK,
+	CB_USE_CONSTRAINTS_CHECK,
+
+	CB_LINK_ANGLE_SPINNERS,
+	CB_LINK_WEIGHT_SPINNERS,
+
+	CB_RESET
+}Action;
+
 TIFFRGBAImage img;
 uint32 *raster;
 size_t npixels;
 int imgwidth, imgheight;
+int w_width, w_height;
 
 int hasABGR = 0;
 int hasConvolve = 0;
@@ -180,8 +209,6 @@ int openFile(const char* mfilename)
   TIFF *tif;
   char emsg[1024];
 
-  //char name[81] = "..\/QueryDisplay\/images\/1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1.tif";
-  //filename = mfilename;
   if (mfilename == NULL) {
     fprintf(stderr, "Filename is null\n");
     exit(1);
@@ -246,11 +273,24 @@ display(void)
   /* Clear the color buffer. */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glBitmap(0, 0, 0, 0, -imgwidth/4, 0, NULL);
   /* Re-blit the image. */
 	glDrawPixels(imgwidth, imgheight,
 		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
 
+	std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
+		openFile(fullPath.c_str());
+		imgCount++;
+		if(imgCount > MAX_IMAGES-1)
+		imgCount = 0;
+   
+   glRasterPos2i(imgwidth/2, 0);
+  /* Re-blit the image. */
+	glDrawPixels(imgwidth, imgheight,
+		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
+		 raster);
+	glRasterPos2i(0, 0);
   /* Swap the buffers if necessary. */
   if (doubleBuffer) {
     glutSwapBuffers();
@@ -271,11 +311,11 @@ mouse(int button, int state, int x, int y)
       //oy = y;
       moving = 1;
 		
-		std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
+		/*std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
 		openFile(fullPath.c_str());
 		imgCount++;
 		if(imgCount > MAX_IMAGES-1)
-		imgCount = 0;
+		imgCount = 0;*/
 
     } else {
 
@@ -327,6 +367,77 @@ option(int value)
   glutPostRedisplay();
 }
 
+// some controls generate a callback when they are changed
+void glui_cb(int control)
+{
+	//TODO: redo all this
+	switch(control)
+	{
+	case CB_GRID_BUTTON:
+			//showGrid = !showGrid;
+		break;
+	case CB_UPDATE_LINKS_BUTTON:
+			//updateLinksButton();
+		break;
+	case CB_NUMLINKS_SPINNER:
+		break;
+	case CB_INIT_ANGLE_SPINNER:
+		break;
+	case CB_INIT_LENGTH_SPINNER:
+		break;
+	case CB_LINK_ANGLE_SPINNERS:
+		for(int i = 0; i < numLinks; i++)
+			//desiredAngles[i] = *link_angles[i];
+		break;
+	case CB_LINK_WEIGHT_SPINNERS:
+		for(int i = 0; i < numLinks; i++)
+			//constraintWeights[i] = *link_weights[i];
+		break;
+	case CB_DRAW_INTERPOLATED_STEPS_CHECK:
+		break;
+	case CB_USE_CONSTRAINTS_CHECK:
+		//updateSpinnerDisplay();
+		break;
+	case CB_RESET:
+		//reset();
+		break;
+	default:
+		break;
+	}
+
+	glutPostRedisplay();
+}
+
+void initializeSubWindow()
+{
+	//TODO: Redo all this to have button that acutally work and all
+	glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_RIGHT);
+	glui->set_main_gfx_window(main_window);
+
+	//Create a panel
+	GLUI_Panel *init_params_panel = glui->add_panel("Initial Parameters");
+
+	//Add spinner to panel
+	GLUI_Spinner *link_spinner = glui->add_spinner_to_panel(init_params_panel, "Links:", GLUI_SPINNER_INT, &numLinks, CB_NUMLINKS_SPINNER, glui_cb);
+	link_spinner->set_int_limits(0, 10, GLUI_LIMIT_CLAMP);
+
+	GLUI_Spinner *angle_spinner = glui->add_spinner_to_panel(init_params_panel, "Init Angle:", GLUI_SPINNER_FLOAT, &initAngle, CB_INIT_ANGLE_SPINNER, glui_cb);
+	angle_spinner->set_float_limits(0.1f, 90.f, GLUI_LIMIT_CLAMP);
+
+	GLUI_Spinner *length_spinner = glui->add_spinner_to_panel(init_params_panel, "1st Link Length:", GLUI_SPINNER_FLOAT, &length, CB_INIT_LENGTH_SPINNER, glui_cb);
+	length_spinner->set_float_limits(0.2f, 1.75f, GLUI_LIMIT_CLAMP);
+
+	//add button to panel
+	glui->add_button_to_panel(init_params_panel, "Update Links", CB_UPDATE_LINKS_BUTTON, glui_cb);
+
+	//checkboxes
+	glui->add_checkbox("Interpolate Animation", &drawInterpolatedSteps, CB_DRAW_INTERPOLATED_STEPS_CHECK, glui_cb);
+
+	glui->add_separator();
+	glui->add_button("Show Grid", CB_GRID_BUTTON, glui_cb); 
+	glui->add_button("Reset", CB_RESET, glui_cb);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -358,9 +469,12 @@ main(int argc, char **argv)
   imgwidth = img.width;
   imgheight = img.height;
 
-  glutInitWindowSize(imgwidth, imgheight);
+  w_width = imgwidth*1.5+120;
+  w_height = imgheight;
 
-    main_window = glutCreateWindow("Query Display");
+  glutInitWindowSize(w_width, w_height);
+
+   main_window = glutCreateWindow("Query Display");
 
 	// set callbacks
 	glutDisplayFunc(display);
@@ -370,49 +484,17 @@ main(int argc, char **argv)
 	GLUI_Master.set_glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 
+	initializeSubWindow();
 
-#ifdef GL_EXT_abgr
+
+/*#ifdef GL_EXT_abgr
   if (glutExtensionSupported("GL_EXT_abgr")) {
     hasABGR = 1;
   }
 #endif
-#ifdef GL_EXT_convolution
-  if (glutExtensionSupported("GL_EXT_convolution")) {
-    hasConvolve = 1;
-  } else {
-    while (glGetError() != GL_NO_ERROR);  /* Clear any OpenGL errors. */
-
-    /* The following glDisable would be a no-op whether done on a freshly
-       initialized OpenGL context whether convolution is supported or not.
-       The only difference should be an OpenGL error should be reported if
-       the GL_CONVOLUTION_2D_EXT is not understood (ie, convolution is not
-       supported at all). */
-    glDisable(GL_CONVOLUTION_2D_EXT);
-
-    if (glGetError() == GL_NO_ERROR) {
-      /* RealityEngine only partially implements the convolve extension and
-         hence does not advertise the extension in its extension string (See
-         MACHINE DEPENDENCIES section of the glConvolutionFilter2DEXT man
-         page). We limit this program to use only the convolve functionality
-         supported by RealityEngine so we test if OpenGL lets us enable
-         convolution without an error (the indication that convolution is
-         partially supported). */
-      hasConvolve = 1;
-    }
-    /* Clear any further OpenGL errors (hopefully there should have only been 
-
-       one or zero though). */
-    while (glGetError() != GL_NO_ERROR);
-  }
-#endif
-#ifdef GL_SGI_color_matrix
-  if (glutExtensionSupported("GL_SGI_color_matrix")) {
-    hasColorMatrix = 1;
-  }
-#endif
   /* If cannot directly display ABGR format, we need to reverse the component
      ordering in each pixel. :-( */
-  if (!hasABGR) {
+  /*if (!hasABGR) {
     int i;
 
     for (i = 0; i < npixels; i++) {
@@ -426,7 +508,7 @@ main(int argc, char **argv)
       cp[2] = cp[1];
       cp[1] = t;
     }
-  }
+  }*/
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glutCreateMenu(option);
   glutAddMenuEntry("Normal", 1);
