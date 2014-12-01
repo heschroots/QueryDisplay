@@ -37,7 +37,7 @@
   // FreeGLUT does not yet work perfectly with GLUI
   //  - use at your own risk.
   
-  #include <GL/freeglut.h>
+  #include <freeglut.h>
 
 #elif defined(GLUI_OPENGLUT)
 
@@ -51,7 +51,7 @@
   #ifdef __APPLE__
   #include <GLUT/glut.h>
   #else
-  #include <GL/glut.h>
+  #include "glut.h"
   #endif
 
 #endif
