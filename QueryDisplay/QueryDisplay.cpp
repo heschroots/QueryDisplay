@@ -18,6 +18,7 @@
 #include <string.h>
 #include <sstream>
 #include <Windows.h>
+#include <chrono>
 #include "stdafx.h"
 #include "glut.h"
 #include "dirent.h"
@@ -267,10 +268,9 @@ reshape(int w, int h)
   glBitmap(0, 0, 0, 0, ax, -ay, NULL);
 }
 
-void
-display(void)
+void drawHands() //std::string filename1, std::string filename2)
 {
-  /* Clear the color buffer. */
+	 /* Clear the color buffer. */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glBitmap(0, 0, 0, 0, -imgwidth/4, 0, NULL);
@@ -282,7 +282,7 @@ display(void)
 	std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
 		openFile(fullPath.c_str());
 		imgCount++;
-		if(imgCount > MAX_IMAGES-1)
+		if(imgCount >= tiffImages.size())
 		imgCount = 0;
    
    glRasterPos2i(imgwidth/2, 0);
@@ -291,6 +291,32 @@ display(void)
 		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
 	glRasterPos2i(0, 0);
+	glutSwapBuffers();
+}
+void
+display(void)
+{
+  /* Clear the color buffer. */
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  /*glBitmap(0, 0, 0, 0, -imgwidth/4, 0, NULL);
+  // Re-blit the image. 
+	glDrawPixels(imgwidth, imgheight,
+		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
+		 raster);
+
+	std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
+		openFile(fullPath.c_str());
+		imgCount++;
+		if(imgCount > MAX_IMAGES-1)
+		imgCount = 0;
+   
+   glRasterPos2i(imgwidth/2, 0);
+  // Re-blit the image. 
+	glDrawPixels(imgwidth, imgheight,
+		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
+		 raster);
+	glRasterPos2i(0, 0);*/
   /* Swap the buffers if necessary. */
   if (doubleBuffer) {
     glutSwapBuffers();
@@ -324,6 +350,15 @@ mouse(int button, int state, int x, int y)
       moving = 0;
     }
 
+  }
+  auto start = std::chrono::system_clock::now();
+  drawHands();
+  auto elapsed = 0.0;
+  while( elapsed < 1000)
+  {
+	  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+	  std::chrono::system_clock::now() - start);
+	  elapsed = duration.count();
   }
    glutPostRedisplay();
 }
