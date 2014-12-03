@@ -99,92 +99,7 @@ std::vector<std::string> tiffImages;
 std::map<std::string, int> tiffIndices;
 int imgCount=0;
 
-/* Find files and subdirectories recursively */
-static int
-find_directory(
-		const char *dirname)
-{
-		char buffer[PATH_MAX + 2];
-		char *p = buffer;
-		const char *src;
-		char *end = &buffer[PATH_MAX];
-		int ok;
-
-		/* Copy directory name to buffer */
-		src = dirname;
-		while (p < end  &&  *src != '\0') {
-			*p++ = *src++;
-		}
-		*p = '\0';
-
-		/* Open directory stream */
-		DIR* dir = opendir (dirname);
-		if (dir != NULL) {
-			struct dirent *ent;
-
-			/* Print all files and directories within the directory */
-			while ((ent = readdir (dir)) != NULL) {
-				char *q = p;
-				char c;
-
-				/* Get final character of directory name */
-				if (buffer < q) {
-						c = q[-1];
-				} else {
-						c = ':';
-				}
-
-				/* Append directory separator if not already there */
-				if (c != ':'  &&  c != '/'  &&  c != '\\') {
-						*q++ = '/';
-				}
-
-				/* Append file name */
-				src = ent->d_name;
-				while (q < end  &&  *src != '\0') {
-						*q++ = *src++;
-				}
-				*q = '\0';
-
-				/* Decide what to do with the directory entry */
-				switch (ent->d_type) {
-				case DT_LNK:
-				case DT_REG:
-						/* Output file name with directory */
-						printf ("%s\n", buffer);
-						break;
-
-				case DT_DIR:
-						/* Scan sub-directory recursively */
-						if (strcmp (ent->d_name, ".") != 0  
-								&&  strcmp (ent->d_name, "..") != 0) {
-							find_directory (buffer);
-						}
-						break;
-
-				default:
-						/* Ignore device entries */
-						/*NOP*/;
-				}
-
-			}
-
-			closedir (dir);
-			ok = 1;
-
-		} else {
-			/* Could not open directory */
-			printf ("Cannot open directory %s\n", dirname);
-			ok = 0;
-		}
-
-		return ok;
-}
-
-void catch_alarm(int sig)
-{
-	glutPostRedisplay();
-}
+static bool firstTime = false;
 
 std::string filePathName(const std::string mfilePath, const std::string mfileName)
 {
@@ -223,6 +138,31 @@ int getFileNames(const char *dirname)
 	}
 	closedir (dir);
 	return tiffImages.size();
+}
+
+void rotateRight()
+{
+  uint32* newRaster =  (uint32*) malloc(npixels * sizeof(uint32));
+  //test rortation
+  for(int row=0; row<img.height; row++) {
+    for(int col=0; col<img.width; col++) {
+		//*(newRaster+4) = *(raster+45);
+         *(newRaster+(img.height*col+row))= *(raster+(img.width*row+col));
+	}	
+  }
+  raster = newRaster;
+}
+
+void rotateLeft()
+{
+   uint32* newRaster =  (uint32*) malloc(npixels * sizeof(uint32));
+  //test rortation
+  for(int row=0; row<img.height; row++) {
+    for(int col=0; col<img.width; col++) {
+         *(newRaster+(img.height*(img.width-1-col+row)))= *(raster+(img.width*row+col));
+	}	
+  }
+  raster = newRaster;
 }
 
 int openFile(const char* mfilename)
@@ -265,6 +205,9 @@ int openFile(const char* mfilename)
     TIFFError(mfilename, emsg);
     exit(1);
   }
+
+  rotateLeft();
+
   return 1;
 }
 
@@ -294,8 +237,9 @@ void drawHands() //std::string filename1, std::string filename2)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glBitmap(0, 0, 0, 0, -imgwidth/4, 0, NULL);
+
   /* Re-blit the image. */
-	glDrawPixels(imgwidth, imgheight,
+	glDrawPixels(imgheight, imgwidth, //imgwidth, imgheight,
 		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
 
@@ -305,9 +249,10 @@ void drawHands() //std::string filename1, std::string filename2)
 		if(imgCount >= tiffImages.size())
 		imgCount = 0;
    
+   glBitmap(0, 0, 0, 0, 0, 0, NULL);
    glRasterPos2i(imgwidth/2, 0);
   /* Re-blit the image. */
-	glDrawPixels(imgwidth, imgheight,
+	glDrawPixels(imgheight, imgwidth, //imgwidth, imgheight,
 		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
 	glRasterPos2i(0, 0);
@@ -322,24 +267,6 @@ display(void)
   /* Clear the color buffer. */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  /*glBitmap(0, 0, 0, 0, -imgwidth/4, 0, NULL);
-  // Re-blit the image. 
-	glDrawPixels(imgwidth, imgheight,
-		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
-		 raster);
-
-	std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
-		openFile(fullPath.c_str());
-		imgCount++;
-		if(imgCount > MAX_IMAGES-1)
-		imgCount = 0;
-   
-   glRasterPos2i(imgwidth/2, 0);
-  // Re-blit the image. 
-	glDrawPixels(imgwidth, imgheight,
-		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
-		 raster);
-	glRasterPos2i(0, 0);*/
   /* Swap the buffers if necessary. */
   if (doubleBuffer) {
     glutSwapBuffers();
@@ -393,6 +320,35 @@ motion(int x, int y)
     ox = x;
     oy = y;
   }
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+	switch(key)
+	{
+	case 'z':
+	case 'Z':
+		std::cout << "Z pressed" <<std::endl;
+		break;
+	case 'm':
+	case 'M':
+		std::cout << "M pressed" <<std::endl;
+		break;
+	case 't':
+	case 'T':
+		std::cout << "T pressed" <<std::endl;
+		break;
+	case 13: //spacebar
+		std::cout << "ENTER pressed" <<std::endl;
+		break;
+	// quit
+	case 27: 
+	case 'q':
+	case 'Q':
+		exit(0);
+		break;
+	}
+	glutPostRedisplay();
 }
 
 void
@@ -541,6 +497,8 @@ main(int argc, char **argv)
 	  exit(1);
   }
 
+  //rotate images
+
   imgwidth = img.width;
   imgheight = img.height;
 
@@ -555,44 +513,21 @@ main(int argc, char **argv)
 	glutDisplayFunc(display);
 	GLUI_Master.set_glutReshapeFunc(reshape);
 	//GLUI_Master.set_glutIdleFunc(myGlutIdle);
-	//GLUI_Master.set_glutKeyboardFunc(myGlutKeyboard);
+	GLUI_Master.set_glutKeyboardFunc(keyboard);
 	GLUI_Master.set_glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 
 	initializeSubWindow();
 
-
-/*#ifdef GL_EXT_abgr
-  if (glutExtensionSupported("GL_EXT_abgr")) {
-    hasABGR = 1;
-  }
-#endif
-  /* If cannot directly display ABGR format, we need to reverse the component
-     ordering in each pixel. :-( */
-  /*if (!hasABGR) {
-    int i;
-
-    for (i = 0; i < npixels; i++) {
-      register unsigned char *cp = (unsigned char *) &raster[i];
-      int t;
-
-      t = cp[3];
-      cp[3] = cp[0];
-      cp[0] = t;
-      t = cp[2];
-      cp[2] = cp[1];
-      cp[1] = t;
-    }
-  }*/
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glutCreateMenu(option);
+  /*glutCreateMenu(option);
   glutAddMenuEntry("Normal", 1);
   glutAddMenuEntry("Quit", 666);
-  glutAttachMenu(GLUT_RIGHT_BUTTON);
+  glutAttachMenu(GLUT_RIGHT_BUTTON);*/
   /* Use a gray background so TIFF images with black backgrounds will
      show against textiff's background. */
   glClearColor(0.2, 0.2, 0.2, 1.0);
-  glEnable(GL_DEPTH_TEST);
+  ///glEnable(GL_DEPTH_TEST);
   glutMainLoop();
   return 0;             /* ANSI C requires main to return int. */
 }
