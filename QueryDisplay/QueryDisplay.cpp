@@ -24,6 +24,7 @@
 #include "dirent.h"
 #include <gl/glcorearb.h>
 #include <vector>
+#include <map>
 #include <tiffio.h>     /* Sam Leffler's libtiff library. */
 
 using namespace std;
@@ -47,8 +48,12 @@ int useContraints;
 
 const typedef enum{
 
-	CB_GRID_BUTTON,
-	CB_UPDATE_LINKS_BUTTON,
+	CB_READY_BUTTON,
+	CB_LEFT_SIDE_WON_BUTTON,
+	CB_RIGHT_SIDE_WON_BUTTON,
+	CB_IT_WAS_A_TIE_BUTTON,
+	CB_I_DONT_KNOW_BUTTON,
+	CB_SUBMIT_BUTTON,
 
 	CB_NUMLINKS_SPINNER,
 	CB_INIT_ANGLE_SPINNER,
@@ -62,6 +67,18 @@ const typedef enum{
 
 	CB_RESET
 }Action;
+
+const typedef enum{
+	TIFF_ROCK,
+	TIFF_PAPER,
+	TIFF_SISSORS,
+	TIFF_ZERO,
+	TIFF_ONE,
+	TIFF_TWO,
+	TIFF_THREE,
+	TIFF_FOUR,
+	TIFF_FIVE
+}HandConfig;
 
 TIFFRGBAImage img;
 uint32 *raster;
@@ -79,11 +96,8 @@ int ax = 0, ay = 0;
 int luminance = 0;
 
 std::vector<std::string> tiffImages;
+std::map<std::string, int> tiffIndices;
 int imgCount=0;
-
-GLfloat rgbBlur[7][7][3];
-GLfloat rgbEdgeDetect[3][3][3];
-GLfloat rgbSharpen[3][3][3];
 
 /* Find files and subdirectories recursively */
 static int
@@ -167,6 +181,11 @@ find_directory(
 		return ok;
 }
 
+void catch_alarm(int sig)
+{
+	glutPostRedisplay();
+}
+
 std::string filePathName(const std::string mfilePath, const std::string mfileName)
 {
 	std::string buffer;
@@ -198,6 +217,7 @@ int getFileNames(const char *dirname)
 				*p = '\0';
 				std::string name(buffer);
 				tiffImages.push_back(name);
+				tiffIndices.insert(std::map<std::string, int>::value_type(name, tiffImages.size()-1));
 			}
 		}
 	}
@@ -293,6 +313,9 @@ void drawHands() //std::string filename1, std::string filename2)
 	glRasterPos2i(0, 0);
 	glutSwapBuffers();
 }
+
+static int showingImages = 0;
+
 void
 display(void)
 {
@@ -321,9 +344,10 @@ display(void)
   if (doubleBuffer) {
     glutSwapBuffers();
   }
+  showingImages = 0;
 }
 
-static int moving = 0, ox, oy;
+static int ox, oy;
 
 void
 mouse(int button, int state, int x, int y)
@@ -335,39 +359,22 @@ mouse(int button, int state, int x, int y)
          "moving" true since button is pressed. */
       //ox = x;
       //oy = y;
-      moving = 1;
 		
-		/*std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
-		openFile(fullPath.c_str());
-		imgCount++;
-		if(imgCount > MAX_IMAGES-1)
-		imgCount = 0;*/
-
     } else {
 
       /* Left mouse button released; unset "moving" since button no longer
          pressed. */
-      moving = 0;
-    }
 
+    }
   }
-  auto start = std::chrono::system_clock::now();
-  drawHands();
-  auto elapsed = 0.0;
-  while( elapsed < 1000)
-  {
-	  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-	  std::chrono::system_clock::now() - start);
-	  elapsed = duration.count();
-  }
-   glutPostRedisplay();
+
 }
 
 void
 motion(int x, int y)
 {
   /* If there is mouse motion with the left button held down... */
-  if (moving) {
+  if (!showingImages) {
 
     /* Figure out the offset from the last mouse position seen. */
     //ax += (x - ox);
@@ -408,11 +415,37 @@ void glui_cb(int control)
 	//TODO: redo all this
 	switch(control)
 	{
-	case CB_GRID_BUTTON:
+	case CB_READY_BUTTON:
+		drawHands();
+
+		if(!showingImages)
+		{
+			showingImages = 1;
+			auto start = std::chrono::system_clock::now();
+			drawHands();
+			auto elapsed = 0.0;
+			while( elapsed < 1000)
+			{
+				auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now() - start);
+				elapsed = duration.count();
+			}
+			glutPostRedisplay();
+		}
+		break;
+	case CB_LEFT_SIDE_WON_BUTTON:
 			//showGrid = !showGrid;
 		break;
-	case CB_UPDATE_LINKS_BUTTON:
+	case CB_RIGHT_SIDE_WON_BUTTON:
 			//updateLinksButton();
+		break;
+	case CB_IT_WAS_A_TIE_BUTTON:
+	//updateLinksButton();
+		break;
+	case CB_I_DONT_KNOW_BUTTON:
+	//updateLinksButton();
+		break;
+	case CB_SUBMIT_BUTTON:
 		break;
 	case CB_NUMLINKS_SPINNER:
 		break;
@@ -449,28 +482,35 @@ void initializeSubWindow()
 	glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_RIGHT);
 	glui->set_main_gfx_window(main_window);
 
-	//Create a panel
-	GLUI_Panel *init_params_panel = glui->add_panel("Initial Parameters");
+	GLUI_Panel *controls_panel = glui->add_panel("Controls");
+	//add button to panel
+	glui->add_button_to_panel(controls_panel, "Ready. Show Images", CB_READY_BUTTON, glui_cb);
 
 	//Add spinner to panel
-	GLUI_Spinner *link_spinner = glui->add_spinner_to_panel(init_params_panel, "Links:", GLUI_SPINNER_INT, &numLinks, CB_NUMLINKS_SPINNER, glui_cb);
+	/*GLUI_Spinner *link_spinner = glui->add_spinner_to_panel(init_params_panel, "Links:", GLUI_SPINNER_INT, &numLinks, CB_NUMLINKS_SPINNER, glui_cb);
 	link_spinner->set_int_limits(0, 10, GLUI_LIMIT_CLAMP);
 
 	GLUI_Spinner *angle_spinner = glui->add_spinner_to_panel(init_params_panel, "Init Angle:", GLUI_SPINNER_FLOAT, &initAngle, CB_INIT_ANGLE_SPINNER, glui_cb);
 	angle_spinner->set_float_limits(0.1f, 90.f, GLUI_LIMIT_CLAMP);
 
 	GLUI_Spinner *length_spinner = glui->add_spinner_to_panel(init_params_panel, "1st Link Length:", GLUI_SPINNER_FLOAT, &length, CB_INIT_LENGTH_SPINNER, glui_cb);
-	length_spinner->set_float_limits(0.2f, 1.75f, GLUI_LIMIT_CLAMP);
+	length_spinner->set_float_limits(0.2f, 1.75f, GLUI_LIMIT_CLAMP);*/
 
+	//Create a panel
+	GLUI_Panel *answers_panel = glui->add_panel("Answers");
 	//add button to panel
-	glui->add_button_to_panel(init_params_panel, "Update Links", CB_UPDATE_LINKS_BUTTON, glui_cb);
+	glui->add_button_to_panel(answers_panel, "Left Side Won", CB_LEFT_SIDE_WON_BUTTON, glui_cb);
+	glui->add_separator_to_panel(answers_panel); 
+	glui->add_button_to_panel(answers_panel, "It was a Tie", CB_IT_WAS_A_TIE_BUTTON, glui_cb);
+	glui->add_column_to_panel(answers_panel, false); 
+	glui->add_button_to_panel(answers_panel, "Right Side Won", CB_LEFT_SIDE_WON_BUTTON, glui_cb);
+	glui->add_separator_to_panel(answers_panel); 
+	glui->add_button_to_panel(answers_panel, "I don't know", CB_I_DONT_KNOW_BUTTON, glui_cb);
 
 	//checkboxes
-	glui->add_checkbox("Interpolate Animation", &drawInterpolatedSteps, CB_DRAW_INTERPOLATED_STEPS_CHECK, glui_cb);
+	//glui->add_checkbox("Interpolate Animation", &drawInterpolatedSteps, CB_DRAW_INTERPOLATED_STEPS_CHECK, glui_cb);
 
 	glui->add_separator();
-	glui->add_button("Show Grid", CB_GRID_BUTTON, glui_cb); 
-	glui->add_button("Reset", CB_RESET, glui_cb);
 }
 
 int
