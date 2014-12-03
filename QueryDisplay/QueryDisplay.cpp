@@ -140,29 +140,50 @@ int getFileNames(const char *dirname)
 	return tiffImages.size();
 }
 
-void rotateRight()
+void rotateLeft()
 {
   uint32* newRaster =  (uint32*) malloc(npixels * sizeof(uint32));
   //test rortation
   for(int row=0; row<img.height; row++) {
     for(int col=0; col<img.width; col++) {
-		//*(newRaster+4) = *(raster+45);
-         *(newRaster+(img.height*col+row))= *(raster+(img.width*row+col));
+		*(newRaster+(col*img.height+img.height-1-row))= *(raster+(img.width*row+col));
+        //*(newRaster+(img.height*col+row))= *(raster+(img.width*row+col));
 	}	
   }
+  uint32* tmpRaster = raster;
   raster = newRaster;
+
+  delete tmpRaster;
+
+  int tmpwidth = img.width;
+  int tmpheight = img.height;
+  img.width = tmpheight;
+  img.height = tmpwidth;
+  imgwidth = img.width;
+  imgheight = img.height;
 }
 
-void rotateLeft()
+void rotateRight()
 {
    uint32* newRaster =  (uint32*) malloc(npixels * sizeof(uint32));
   //test rortation
   for(int row=0; row<img.height; row++) {
     for(int col=0; col<img.width; col++) {
-         *(newRaster+(img.height*(img.width-1-col+row)))= *(raster+(img.width*row+col));
+		*(newRaster+(img.height*(img.width-1-col)+row))= *(raster+(img.width*row+col));
+         //*(newRaster+(col*img.height+img.height-1-row))= *(raster+(img.width*row+col));
 	}	
   }
+  uint32* tmpRaster = raster;
   raster = newRaster;
+
+  delete tmpRaster;
+
+  int tmpwidth = img.width;
+  int tmpheight = img.height;
+  img.width = tmpheight;
+  img.height = tmpwidth;
+  imgwidth = img.width;
+  imgheight = img.height;
 }
 
 int openFile(const char* mfilename)
@@ -205,9 +226,8 @@ int openFile(const char* mfilename)
     TIFFError(mfilename, emsg);
     exit(1);
   }
-
-  rotateLeft();
-
+  imgwidth = img.width;
+  imgheight = img.height;
   return 1;
 }
 
@@ -226,7 +246,7 @@ reshape(int w, int h)
   gluOrtho2D(0, w, 0, h);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0, h - imgheight, 0);
+  glTranslatef(0, 0, 0);
   glRasterPos2i(0, 0);
   glBitmap(0, 0, 0, 0, ax, -ay, NULL);
 }
@@ -236,24 +256,26 @@ void drawHands() //std::string filename1, std::string filename2)
 	 /* Clear the color buffer. */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glBitmap(0, 0, 0, 0, -imgwidth/4, 0, NULL);
+  glBitmap(0, 0, 0, 0, 0, 0, NULL);
 
+  	std::string fullPath = filePathName(fileDir, tiffImages.at((!imgCount)? 0 : imgCount-1 ));
+	openFile(fullPath.c_str());
+	rotateRight();
   /* Re-blit the image. */
-	glDrawPixels(imgheight, imgwidth, //imgwidth, imgheight,
-		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
+	glDrawPixels(imgwidth, imgheight, GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
 
-	std::string fullPath = filePathName(fileDir, tiffImages.at(imgCount));
+	fullPath = filePathName(fileDir, tiffImages.at(imgCount));
 		openFile(fullPath.c_str());
 		imgCount++;
 		if(imgCount >= tiffImages.size())
 		imgCount = 0;
    
+   rotateLeft();
    glBitmap(0, 0, 0, 0, 0, 0, NULL);
-   glRasterPos2i(imgwidth/2, 0);
+   glRasterPos2i(imgwidth, 0);
   /* Re-blit the image. */
-	glDrawPixels(imgheight, imgwidth, //imgwidth, imgheight,
-		 hasABGR ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE,
+	glDrawPixels(imgwidth, imgheight, GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
 	glRasterPos2i(0, 0);
 	glutSwapBuffers();
@@ -372,8 +394,6 @@ void glui_cb(int control)
 	switch(control)
 	{
 	case CB_READY_BUTTON:
-		drawHands();
-
 		if(!showingImages)
 		{
 			showingImages = 1;
@@ -497,13 +517,10 @@ main(int argc, char **argv)
 	  exit(1);
   }
 
-  //rotate images
+  w_width = imgheight*2.25+120;
+  w_height = imgwidth;
 
-  imgwidth = img.width;
-  imgheight = img.height;
-
-  w_width = imgwidth*1.5+120;
-  w_height = imgheight;
+  //rotateRight();
 
   glutInitWindowSize(w_width, w_height);
 
