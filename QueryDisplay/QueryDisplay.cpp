@@ -458,6 +458,22 @@ void initializeSubWindow()
 	glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_RIGHT);
 	glui->set_main_gfx_window(main_window);
 
+	GLUI_Panel *instructions_panel = glui->add_panel("Instructions");
+
+	//add text to panel
+	glui->add_statictext_to_panel(instructions_panel, "This system will display a series of animated hand gestures.");
+	glui->add_statictext_to_panel(instructions_panel, "There are two categories of hand gestures:");
+	glui->add_statictext_to_panel(instructions_panel, "1. Rock-Paper-Scissors, in which two hand gestures");
+	glui->add_statictext_to_panel(instructions_panel, "will be shown and you will identify the winner.");
+	glui->add_statictext_to_panel(instructions_panel, "2. Finger Counting, in which a hand will be shows and");
+	glui->add_statictext_to_panel(instructions_panel, "you are asked to count how many fingers were held up.");
+	
+	glui->add_statictext("");
+	glui->add_statictext("");
+	glui->add_statictext("");
+	glui->add_statictext("");
+	glui->add_statictext("");
+
 	GLUI_Panel *controls_panel = glui->add_panel("Controls");
 	//add button to panel
 	glui->add_button_to_panel(controls_panel, "Ready. Show Images", CB_READY_BUTTON, glui_cb);
@@ -472,21 +488,28 @@ void initializeSubWindow()
 	GLUI_Spinner *length_spinner = glui->add_spinner_to_panel(init_params_panel, "1st Link Length:", GLUI_SPINNER_FLOAT, &length, CB_INIT_LENGTH_SPINNER, glui_cb);
 	length_spinner->set_float_limits(0.2f, 1.75f, GLUI_LIMIT_CLAMP);*/
 
+	glui->add_statictext("");
+	glui->add_statictext("");
+	glui->add_statictext("");
+	glui->add_statictext("");
+	glui->add_statictext("");
+
 	//Create a panel
-	GLUI_Panel *answers_panel = glui->add_panel("Answers");
+	GLUI_Panel *answers_panel = glui->add_panel("Keyboard Input Answers");
 	//add button to panel
-	glui->add_button_to_panel(answers_panel, "Left Side Won", CB_LEFT_SIDE_WON_BUTTON, glui_cb);
-	glui->add_separator_to_panel(answers_panel); 
-	glui->add_button_to_panel(answers_panel, "It was a Tie", CB_IT_WAS_A_TIE_BUTTON, glui_cb);
-	glui->add_column_to_panel(answers_panel, false); 
-	glui->add_button_to_panel(answers_panel, "Right Side Won", CB_LEFT_SIDE_WON_BUTTON, glui_cb);
-	glui->add_separator_to_panel(answers_panel); 
-	glui->add_button_to_panel(answers_panel, "I don't know", CB_I_DONT_KNOW_BUTTON, glui_cb);
 
-	//checkboxes
-	//glui->add_checkbox("Interpolate Animation", &drawInterpolatedSteps, CB_DRAW_INTERPOLATED_STEPS_CHECK, glui_cb);
+	glui->add_statictext_to_panel(answers_panel, "           'z' to indicate that the LEFT hand won.       ");
+	glui->add_statictext_to_panel(answers_panel, "           'm' to indicate that the RIGHT hand won       ");
+	glui->add_statictext_to_panel(answers_panel, "           't' to indicate that it was a tie      ");
+	glui->add_statictext_to_panel(answers_panel, "           'ENTER' if you are not sure who won.     ");
 
-	glui->add_separator();
+
+	}
+
+void welcomeScreen()
+{
+
+
 }
 
 int
@@ -517,7 +540,7 @@ main(int argc, char **argv)
 	  exit(1);
   }
 
-  w_width = imgheight*2.25+120;
+  w_width = imgheight*2.25+240;
   w_height = imgwidth;
 
   //rotateRight();
@@ -535,6 +558,7 @@ main(int argc, char **argv)
 	glutMotionFunc(motion);
 
 	initializeSubWindow();
+	welcomeScreen();
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   /*glutCreateMenu(option);
