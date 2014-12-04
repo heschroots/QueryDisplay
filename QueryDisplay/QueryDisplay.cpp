@@ -22,7 +22,6 @@
 #include "stdafx.h"
 #include "glut.h"
 #include "dirent.h"
-#include <gl/glcorearb.h>
 #include <vector>
 #include <map>
 #include <tiffio.h>     /* Sam Leffler's libtiff library. */
@@ -105,8 +104,11 @@ int imgCount=0;
 
 //QuerySet Related info
 std::vector<QuerySet> querySets;
+int querySetIdx = 0;
 
 static bool firstTime = false;
+static bool leftWinner = false;
+static bool rightWinner = false;
 
 std::string filePathName(const std::string mfilePath, const std::string mfileName)
 {
@@ -154,7 +156,6 @@ void rotateLeft()
   for(int row=0; row<img.height; row++) {
     for(int col=0; col<img.width; col++) {
 		*(newRaster+(col*img.height+img.height-1-row))= *(raster+(img.width*row+col));
-        //*(newRaster+(img.height*col+row))= *(raster+(img.width*row+col));
 	}	
   }
   uint32* tmpRaster = raster;
@@ -177,7 +178,6 @@ void rotateRight()
   for(int row=0; row<img.height; row++) {
     for(int col=0; col<img.width; col++) {
 		*(newRaster+(img.height*(img.width-1-col)+row))= *(raster+(img.width*row+col));
-         //*(newRaster+(col*img.height+img.height-1-row))= *(raster+(img.width*row+col));
 	}	
   }
   uint32* tmpRaster = raster;
@@ -193,6 +193,20 @@ void rotateRight()
   imgheight = img.height;
 }
 
+void mirror()
+{
+   uint32* newRaster =  (uint32*) malloc(npixels * sizeof(uint32));
+  //test rortation
+  for(int row=0; row<img.height; row++) {
+    for(int col=0; col<img.width; col++) {
+		*(newRaster+(img.width*row+(img.width-1-col)))= *(raster+(img.width*row+col));
+	}	
+  }
+  uint32* tmpRaster = raster;
+  raster = newRaster;
+
+  delete tmpRaster;
+}
 int openFile(const char* mfilename)
 {
   TIFF *tif;
@@ -226,6 +240,11 @@ int openFile(const char* mfilename)
   return 1;
 }
 
+
+void generateNewQuerySetIdx()
+{
+	querySetIdx = 0;
+}
 /* If resize is called, enable drawing into the full screen area
    (glViewport). Then setup the modelview and projection matrices to map 2D
    x,y coodinates directly onto pixels in the window (lower left origin).
@@ -248,27 +267,34 @@ reshape(int w, int h)
 
 void drawHands() //std::string filename1, std::string filename2)
 {
+	std::string leftImage;
+	std::string rightImage;
+
+	QuerySet currentQS = querySets.at(querySetIdx);
+	currentQS.getImageFileNames(leftImage, rightImage);
+
 	 /* Clear the color buffer. */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glBitmap(0, 0, 0, 0, 0, 0, NULL);
-
-  	std::string fullPath = filePathName(fileDir, tiffImages.at((!imgCount)? 0 : imgCount-1 ));
+  	std::string fullPath = filePathName(fileDir, leftImage);
 	openFile(fullPath.c_str());
+
+	//tranformations
+	mirror();
 	rotateRight();
 
   /* Re-blit the image. */
 	glDrawPixels(imgwidth, imgheight, GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
+	
 
-	fullPath = filePathName(fileDir, tiffImages.at(imgCount));
-		openFile(fullPath.c_str());
-		imgCount++;
-		if(imgCount >= tiffImages.size())
-		imgCount = 0;
-   
-   rotateLeft();
-   glBitmap(0, 0, 0, 0, 0, 0, NULL);
+	//open Right File
+	fullPath = filePathName(fileDir, rightImage);
+	openFile(fullPath.c_str());
+
+	//transformations
+    rotateLeft();
+
    glRasterPos2i(imgwidth, 0);
   /* Re-blit the image. */
 	glDrawPixels(imgwidth, imgheight, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -339,17 +365,25 @@ void keyboard(unsigned char key, int x, int y)
 	{
 	case 'z':
 	case 'Z':
+		querySets.at(querySetIdx).processAnswer('z');
+		generateNewQuerySetIdx();
 		std::cout << "Z pressed" <<std::endl;
 		break;
 	case 'm':
 	case 'M':
+		querySets.at(querySetIdx).processAnswer('m');
+		generateNewQuerySetIdx();
 		std::cout << "M pressed" <<std::endl;
 		break;
 	case 't':
 	case 'T':
+		querySets.at(querySetIdx).processAnswer('t');
+		generateNewQuerySetIdx();
 		std::cout << "T pressed" <<std::endl;
 		break;
 	case 13: //enter
+		querySets.at(querySetIdx).processAnswer(char(13));
+		generateNewQuerySetIdx();
 		std::cout << "ENTER pressed" <<std::endl;
 		break;
 	// quit
@@ -380,22 +414,22 @@ void addQuerySet(int num)
 	switch(num)
 	{
 	case ROCK_PAPER:
-		querySets.push_back(QuerySet("Rock","Paper"));
+		querySets.push_back(QuerySet("rock","paper"));
 		break;
 	case ROCK_SCISSOR:
-		querySets.push_back(QuerySet("Rock","Scissor"));
+		querySets.push_back(QuerySet("rock","scissor"));
 		break;
 	case PAPER_ROCK:
-		querySets.push_back(QuerySet("Paper","Rock"));
+		querySets.push_back(QuerySet("paper","rock"));
 		break;
 	case PAPER_SCISSOR:
-		querySets.push_back(QuerySet("Paper","Scissor"));
+		querySets.push_back(QuerySet("paper","scissor"));
 		break;
 	case SCISSOR_ROCK:
-		querySets.push_back(QuerySet("Scissor","Rock"));
+		querySets.push_back(QuerySet("scissor","rock"));
 		break;
 	case SCISSOR_PAPER:
-		querySets.push_back(QuerySet("Scissor","Paper"));
+		querySets.push_back(QuerySet("scissor","paper"));
 		break;
 	}
 }
@@ -406,7 +440,7 @@ void initializeQuerySets()
 	//of which query sets we've already added
 	std::map<int, bool> queryMap;
 
-	//generate a random int. This int corresponds to the QUerySet enumType
+	//generate a random int. This int corresponds to the QuerySet enumType
 	int numQuerySets = 6;
 	srand( time(NULL) );
 	int randomNum;
@@ -427,7 +461,6 @@ void initializeQuerySets()
 // some controls generate a callback when they are changed
 void glui_cb(int control)
 {
-	//TODO: redo all this
 	switch(control)
 	{
 	case CB_READY_BUTTON:
@@ -628,7 +661,7 @@ main(int argc, char **argv)
 	mainSubWindow();
 	welcomeScreen();
 
-	//initializeQuerySets();	
+	initializeQuerySets();	
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glClearColor(0.2, 0.2, 0.2, 1.0);
