@@ -76,11 +76,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="QueryDisplay.cpp" />
+    <ClCompile Include="QuerySet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dirent.h" />
     <ClInclude Include="glui.h" />
     <ClInclude Include="glut.h" />
+    <ClInclude Include="QuerySet.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
