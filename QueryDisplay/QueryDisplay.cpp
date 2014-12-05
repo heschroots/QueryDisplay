@@ -13,23 +13,23 @@
    you blur, sharpen, edge detect, and color convert to grayscale the TIFF
    file.  You can also move around the image within the window. */
 
+#include "stdafx.h"
+#include "glui.h"
+#include "dirent.h"
+#include "QuerySet.h"
+
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>
 #include <Windows.h>
 #include <chrono>
-#include "stdafx.h"
-#include "glut.h"
-#include "dirent.h"
 #include <vector>
 #include <map>
 #include <tiffio.h>     /* Sam Leffler's libtiff library. */
-#include "QuerySet.h"
+
 
 using namespace std;
-
-static const int MAX_IMAGES = 2;
 
 //Holds the index to the main window
 int main_window; 
@@ -38,6 +38,7 @@ int main_window;
 GLUI *glui;
 GLUI* msgGlui; 
 GLUI* welcomeGlui;
+GLUI* warningGlui;
 
 //Live Variables
 int numLinks = 10;
@@ -57,6 +58,7 @@ const typedef enum{
 	CB_I_DONT_KNOW_BUTTON,
 	//CB_SUBMIT_BUTTON,
 	CB_NEXT_BUTTON,
+	CB_CONFIRM_BUTTON,
 	CB_OK_BUTTON,
 	CB_YES_BUTTON,
 	CB_NO_BUTTON
@@ -104,11 +106,13 @@ int imgCount=0;
 
 //QuerySet Related info
 std::vector<QuerySet> querySets;
+std::vector<QuerySet*> querySetPtrs;
 int querySetIdx = 0;
 
 static bool firstTime = false;
 static bool leftWinner = false;
 static bool rightWinner = false;
+static bool waitingForAnswer = false;
 
 std::string filePathName(const std::string mfilePath, const std::string mfileName)
 {
@@ -243,7 +247,9 @@ int openFile(const char* mfilename)
 
 void generateNewQuerySetIdx()
 {
-	querySetIdx = 0;
+	querySetIdx++; // = rand() % 6;
+	if(querySetIdx > 48)
+		exit(1);
 }
 /* If resize is called, enable drawing into the full screen area
    (glViewport). Then setup the modelview and projection matrices to map 2D
@@ -271,14 +277,16 @@ void drawHands() //std::string filename1, std::string filename2)
 	std::string rightImage;
 
 	QuerySet currentQS = querySets.at(querySetIdx);
+	std::cout << "Query IDX " << querySetIdx << std::endl;
 	currentQS.getImageFileNames(leftImage, rightImage);
 
 	 /* Clear the color buffer. */
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   	std::string fullPath = filePathName(fileDir, leftImage);
 	openFile(fullPath.c_str());
 
+	std::cout << "LEFT: " << leftImage << std::endl;
 	//tranformations
 	mirror();
 	rotateRight();
@@ -292,6 +300,7 @@ void drawHands() //std::string filename1, std::string filename2)
 	fullPath = filePathName(fileDir, rightImage);
 	openFile(fullPath.c_str());
 
+	std::cout << "RIGHT: " << rightImage << std::endl;
 	//transformations
     rotateLeft();
 
@@ -318,18 +327,31 @@ display(void)
   showingImages = 0;
 }
 
+void myGlutIdle(void)
+{
+	// make sure the main window is active
+	if (glutGetWindow() != main_window)
+		glutSetWindow(main_window);
+	// just keep redrawing the scene over and over
+	glutPostRedisplay();
+}
+
 static int ox, oy;
 
 void
 mouse(int button, int state, int x, int y)
 {
+	myGlutIdle();
   if (button == GLUT_LEFT_BUTTON) {
     if (state == GLUT_DOWN) {
 
+		 std::cout << "Main Window is " << main_window << std::endl;
+		 std::cout << "Current Window " << glutGetWindow() << std::endl;
     } else {
 
       /* Left mouse button released; unset "moving" since button no longer
          pressed. */
+		 //std::cout << "Mouse released" <<std::endl;
     }
   }
 }
@@ -337,6 +359,7 @@ mouse(int button, int state, int x, int y)
 void
 motion(int x, int y)
 {
+	myGlutIdle();
   /* If there is mouse motion with the left button held down... */
   if (!showingImages) {
 
@@ -350,6 +373,7 @@ motion(int x, int y)
        window coordinates. */
     //glBitmap(0, 0, 0, 0, x - ox, oy - y, NULL);
 
+	  //std::cout << "Mouse Moved" <<std::endl;
     /* Request a window redraw. */
     glutPostRedisplay();
 
@@ -359,32 +383,65 @@ motion(int x, int y)
   }
 }
 
-void keyboard(unsigned char key, int x, int y)
+void 
+myGlutKeyboard(unsigned char key, int x, int y)
 {
 	switch(key)
 	{
 	case 'z':
 	case 'Z':
-		querySets.at(querySetIdx).processAnswer('z');
-		generateNewQuerySetIdx();
-		std::cout << "Z pressed" <<std::endl;
+		if(waitingForAnswer)
+		{
+			querySets.at(querySetIdx).processAnswer('z');
+			generateNewQuerySetIdx();
+			std::cout << "Z pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+		{
+			std::cout << "Z: "  << "Already answered or not Waiting for answer " <<std::endl;
+		}
 		break;
 	case 'm':
 	case 'M':
-		querySets.at(querySetIdx).processAnswer('m');
-		generateNewQuerySetIdx();
-		std::cout << "M pressed" <<std::endl;
+		if(waitingForAnswer)
+		{
+			querySets.at(querySetIdx).processAnswer('m');
+			generateNewQuerySetIdx();
+			std::cout << "M pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+		{
+			std::cout << "M: "  << "Already answered or not Waiting for answer " <<std::endl;
+		}
 		break;
 	case 't':
 	case 'T':
-		querySets.at(querySetIdx).processAnswer('t');
-		generateNewQuerySetIdx();
-		std::cout << "T pressed" <<std::endl;
+		if(waitingForAnswer)
+		{
+			querySets.at(querySetIdx).processAnswer('t');
+			generateNewQuerySetIdx();
+			std::cout << "T pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+		{
+			std::cout << "T: "  << "Already answered or not Waiting for answer " <<std::endl;
+		}
 		break;
 	case 13: //enter
-		querySets.at(querySetIdx).processAnswer(char(13));
-		generateNewQuerySetIdx();
-		std::cout << "ENTER pressed" <<std::endl;
+		if(waitingForAnswer)
+		{
+			querySets.at(querySetIdx).processAnswer(char(13));
+			generateNewQuerySetIdx();
+			std::cout << "ENTER pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+		{
+			std::cout << "ENTER: "  << "Already answered or not Waiting for answer " <<std::endl;
+		}
 		break;
 	// quit
 	case 27: 
@@ -438,22 +495,29 @@ void initializeQuerySets()
 {
 	//To esnure we don't add the same query set twice, well keep a hash
 	//of which query sets we've already added
-	std::map<int, bool> queryMap;
+	std::map<int, int> queryMap;
 
 	//generate a random int. This int corresponds to the QuerySet enumType
 	int numQuerySets = 6;
 	srand( time(NULL) );
 	int randomNum;
+
 	while(querySets.size() < numQuerySets)
 	{
-		randomNum = rand() % numQuerySets; //some number between 0 and 6
-		if(queryMap.count(randomNum))
+		randomNum = rand() % numQuerySets; //some number between 0 and 5
+		if(queryMap.count(randomNum)) // && queryMap.count(randomNum) < 8 ) // we only want 8 pointers per query set
 		{
-			//this particular Query has already been added
+			//this particular Query has already been added 
+			//but there are less than 8 of them
+			//int val = queryMap.at(randomNum);
+
+			//querySetPtrs.push_back(&(querySets.at(val)));
+
 		} else {
 			//add new querySet
 			addQuerySet(randomNum);
-			queryMap.insert(std::map<int, bool>::value_type(randomNum, true));
+			queryMap.insert(std::map<int, int>::value_type(randomNum, querySets.size()-1));
+			//querySetPtrs.push_back(&(querySets.at(querySets.size()-1)));
 		}
 	}
 }
@@ -464,9 +528,16 @@ void glui_cb(int control)
 	switch(control)
 	{
 	case CB_READY_BUTTON:
-		if(!showingImages)
+		if(waitingForAnswer)
 		{
+			if(warningGlui)
+				warningGlui->show();
+		}
+		else if(!showingImages)
+		{
+			std::cout << std::endl;
 			showingImages = 1;
+			waitingForAnswer = true;
 			auto start = std::chrono::system_clock::now();
 			drawHands();
 			auto elapsed = 0.0;
@@ -476,7 +547,10 @@ void glui_cb(int control)
 				std::chrono::system_clock::now() - start);
 				elapsed = duration.count();
 			}
-			glutPostRedisplay();
+			//glutSetWindow(main_window);
+			//std::cout << "Current Window " << glutGetWindow() << std::endl;
+			///myGlutIdle();
+			//glutPostRedisplay();
 		}
 		break;
 	case CB_LEFT_SIDE_WON_BUTTON:
@@ -491,19 +565,13 @@ void glui_cb(int control)
 	case CB_I_DONT_KNOW_BUTTON:
 	//updateLinksButton();
 		break;
-	case CB_OK_BUTTON:
+	case CB_CONFIRM_BUTTON:
 		if(msgGlui)
 			msgGlui->show();
-		else
-		{
-			msgGlui = GLUI_Master.create_glui("Message",0,w_width/2,w_height/2);
-			//tmpglui->set_main_gfx_window(main_window);
-			msgGlui->add_statictext("Are you sure you understand the instructions?");
-			msgGlui->add_button("Yes", CB_YES_BUTTON, glui_cb);
-			msgGlui->add_column(false);
-			msgGlui->add_statictext("");
-			msgGlui->add_button("No", CB_NO_BUTTON, glui_cb);
-		}
+		break;
+	case CB_OK_BUTTON:
+		if(warningGlui)
+			warningGlui->hide();
 		break;
 	case CB_NEXT_BUTTON:
 		break;
@@ -512,14 +580,15 @@ void glui_cb(int control)
 			msgGlui->hide();
 		if(welcomeGlui)
 		{
-			welcomeGlui->disable();
 			welcomeGlui->hide();
+			welcomeGlui->disable();
 		}
 		if(glui)
 		{
 			glui->enable();
 			glui->show();
 		}
+		break;
 	case CB_NO_BUTTON:
 		if(msgGlui)
 			msgGlui->hide();
@@ -570,13 +639,12 @@ void mainSubWindow()
 	glui->add_statictext_to_panel(answers_panel, "           't' to indicate that it was a tie      ");
 	glui->add_statictext_to_panel(answers_panel, "           'ENTER' if you are not sure who won.     ");
 
-	glui->disable();
 	glui->hide();
 }
 
 void welcomeScreen()
 {
-	welcomeGlui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_RIGHT);
+	welcomeGlui = GLUI_Master.create_glui("Instructions",0,0,0);
 	welcomeGlui->set_main_gfx_window(main_window);
 
 	welcomeGlui->add_statictext("");
@@ -612,7 +680,30 @@ void welcomeScreen()
 	welcomeGlui->add_statictext("");
 
 	//add button to panel
-	welcomeGlui->add_button("Ok", CB_OK_BUTTON, glui_cb);
+	welcomeGlui->add_button("Ok", CB_CONFIRM_BUTTON, glui_cb);
+}
+
+void myGlutInit()
+{
+	//create Message GLUI
+	msgGlui = GLUI_Master.create_glui("Message",0,w_width/2,w_height/2);
+	msgGlui->set_main_gfx_window(main_window);
+	msgGlui->add_statictext("Are you sure you understand the instructions?");
+	msgGlui->add_button("Yes", CB_YES_BUTTON, glui_cb);
+	msgGlui->add_column(false);
+	msgGlui->add_statictext("");
+	msgGlui->add_button("No", CB_NO_BUTTON, glui_cb);
+	msgGlui->hide();
+
+	warningGlui = GLUI_Master.create_glui("Answer Warning",0,w_width/2,w_height/2);
+	warningGlui->set_main_gfx_window(main_window);
+	warningGlui->add_statictext("You have not submitted an Answer for the previous question.");
+	warningGlui->add_statictext("Please use the keyboard to enter an answer.");
+	warningGlui->add_button("OK", CB_OK_BUTTON, glui_cb);
+	warningGlui->hide();
+
+	mainSubWindow();
+	welcomeScreen();
 }
 
 int
@@ -649,17 +740,15 @@ main(int argc, char **argv)
   glutInitWindowSize(w_width, w_height);
 
    main_window = glutCreateWindow("Query Display");
-
 	// set callbacks
-	glutDisplayFunc(display);
+	GLUI_Master.set_glutDisplayFunc(display);
 	GLUI_Master.set_glutReshapeFunc(reshape);
-	//GLUI_Master.set_glutIdleFunc(myGlutIdle);
-	GLUI_Master.set_glutKeyboardFunc(keyboard);
+	GLUI_Master.set_glutIdleFunc(myGlutIdle);
+	GLUI_Master.set_glutKeyboardFunc(myGlutKeyboard);
 	GLUI_Master.set_glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 
-	mainSubWindow();
-	welcomeScreen();
+	myGlutInit();
 
 	initializeQuerySets();	
 
