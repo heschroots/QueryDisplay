@@ -1,11 +1,12 @@
 #include <string>
 #include <time.h>
+#include <sstream>
 #include "QuerySet.h"
 
 using namespace std;
 
 //QuerySet Constructor
-QuerySet::QuerySet(string base_configuration, string change_dimension){
+QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter* writer){
 			this->base_configuration = base_configuration;
 			this->change_dimension = change_dimension;
 			this->lowerBound = 0;
@@ -15,6 +16,8 @@ QuerySet::QuerySet(string base_configuration, string change_dimension){
 			//seed random number generator
 			srand( time(NULL) );
 			generateNewProtoImage();
+
+			myWriter = writer;
 }
 
 //Method to be called that will updated lowerBound, upperBound, and nextGuess when new information
@@ -47,6 +50,8 @@ void QuerySet::processAnswer(char answer){
 		upperBound = nextGuess;
 	}
 	nextGuess = (int)floor((lowerBound + upperBound )/ 2.0);
+
+	write(answer);
 
 	//Identify new proto image
 	generateNewProtoImage();
@@ -115,4 +120,34 @@ void QuerySet::generateProtoImageLocation(){
 		protoImageLocation = PROTO_IMAGE_ON_LEFT;
 	else
 		protoImageLocation = PROTO_IMAGE_ON_RIGHT;
+}
+
+void QuerySet::write(char answer)
+{
+	stringstream os;
+	string location;
+	char delim = ',';
+
+	if(protoImageLocation)
+		location = "Right";
+	else 
+		location = string("Left");
+	os << getImageName()
+	   << delim
+	   << getProtoImageName()
+	   << delim
+	   << location
+	   << delim
+	   << answer
+	   << delim
+	   << lowerBound
+	   << delim
+	   << upperBound
+	   << '\n'
+	   << '\0';
+
+	string output;
+	os >> output;
+
+	myWriter->write(output);
 }

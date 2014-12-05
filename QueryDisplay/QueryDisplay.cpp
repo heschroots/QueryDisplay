@@ -105,10 +105,11 @@ std::map<std::string, int> tiffIndices;
 int imgCount=0;
 
 //QuerySet Related info
-std::vector<QuerySet> querySets;
+std::vector<QuerySet*> querySets;
 std::vector<QuerySet*> querySetPtrs;
 int querySetIdx = 0;
 
+static CsvWriter outputWriter;
 static bool firstTime = false;
 static bool leftWinner = false;
 static bool rightWinner = false;
@@ -248,7 +249,7 @@ int openFile(const char* mfilename)
 void generateNewQuerySetIdx()
 {
 	querySetIdx++; // = rand() % 6;
-	if(querySetIdx > 48)
+	if(querySetIdx > 47)
 		exit(1);
 }
 /* If resize is called, enable drawing into the full screen area
@@ -276,9 +277,9 @@ void drawHands() //std::string filename1, std::string filename2)
 	std::string leftImage;
 	std::string rightImage;
 
-	QuerySet currentQS = querySets.at(querySetIdx);
+	QuerySet* currentQS = querySetPtrs.at(querySetIdx);
 	std::cout << "Query IDX " << querySetIdx << std::endl;
-	currentQS.getImageFileNames(leftImage, rightImage);
+	currentQS->getImageFileNames(leftImage, rightImage);
 
 	 /* Clear the color buffer. */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -392,7 +393,7 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case 'Z':
 		if(waitingForAnswer)
 		{
-			querySets.at(querySetIdx).processAnswer('z');
+			querySetPtrs.at(querySetIdx)->processAnswer('z');
 			generateNewQuerySetIdx();
 			std::cout << "Z pressed" <<std::endl;
 			waitingForAnswer = false;
@@ -406,7 +407,7 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case 'M':
 		if(waitingForAnswer)
 		{
-			querySets.at(querySetIdx).processAnswer('m');
+			querySetPtrs.at(querySetIdx)->processAnswer('m');
 			generateNewQuerySetIdx();
 			std::cout << "M pressed" <<std::endl;
 			waitingForAnswer = false;
@@ -420,7 +421,7 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case 'T':
 		if(waitingForAnswer)
 		{
-			querySets.at(querySetIdx).processAnswer('t');
+			querySetPtrs.at(querySetIdx)->processAnswer('t');
 			generateNewQuerySetIdx();
 			std::cout << "T pressed" <<std::endl;
 			waitingForAnswer = false;
@@ -433,7 +434,7 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case 13: //enter
 		if(waitingForAnswer)
 		{
-			querySets.at(querySetIdx).processAnswer(char(13));
+			querySetPtrs.at(querySetIdx)->processAnswer(char(13));
 			generateNewQuerySetIdx();
 			std::cout << "ENTER pressed" <<std::endl;
 			waitingForAnswer = false;
@@ -454,6 +455,12 @@ myGlutKeyboard(unsigned char key, int x, int y)
 }
 
 void
+myGlutClose()
+{
+	outputWriter.close();
+}
+
+void
 option(int value)
 {
   switch (value) {
@@ -471,22 +478,22 @@ void addQuerySet(int num)
 	switch(num)
 	{
 	case ROCK_PAPER:
-		querySets.push_back(QuerySet("rock","paper"));
+		querySets.push_back(new QuerySet("rock","paper", &outputWriter));
 		break;
 	case ROCK_SCISSOR:
-		querySets.push_back(QuerySet("rock","scissor"));
+		querySets.push_back(new QuerySet("rock","scissor", &outputWriter));
 		break;
 	case PAPER_ROCK:
-		querySets.push_back(QuerySet("paper","rock"));
+		querySets.push_back(new QuerySet("paper","rock", &outputWriter));
 		break;
 	case PAPER_SCISSOR:
-		querySets.push_back(QuerySet("paper","scissor"));
+		querySets.push_back(new QuerySet("paper","scissor", &outputWriter));
 		break;
 	case SCISSOR_ROCK:
-		querySets.push_back(QuerySet("scissor","rock"));
+		querySets.push_back(new QuerySet("scissor","rock", &outputWriter));
 		break;
 	case SCISSOR_PAPER:
-		querySets.push_back(QuerySet("scissor","paper"));
+		querySets.push_back(new QuerySet("scissor","paper", &outputWriter));
 		break;
 	}
 }
@@ -502,22 +509,25 @@ void initializeQuerySets()
 	srand( time(NULL) );
 	int randomNum;
 
-	while(querySets.size() < numQuerySets)
+	int numCount = 0;
+	while(querySetPtrs.size() < numQuerySets * 8)
 	{
 		randomNum = rand() % numQuerySets; //some number between 0 and 5
 		if(queryMap.count(randomNum)) // && queryMap.count(randomNum) < 8 ) // we only want 8 pointers per query set
 		{
 			//this particular Query has already been added 
 			//but there are less than 8 of them
-			//int val = queryMap.at(randomNum);
+			int val = queryMap.at(randomNum);
 
-			//querySetPtrs.push_back(&(querySets.at(val)));
+			querySetPtrs.push_back(querySets.at(val));
 
 		} else {
 			//add new querySet
 			addQuerySet(randomNum);
 			queryMap.insert(std::map<int, int>::value_type(randomNum, querySets.size()-1));
-			//querySetPtrs.push_back(&(querySets.at(querySets.size()-1)));
+			querySetPtrs.push_back(querySets.at(querySets.size()-1));
+			//numCount++;
+			//std::cout << "New query set added " << numCount << std::endl;
 		}
 	}
 }
@@ -600,15 +610,10 @@ void glui_cb(int control)
 	glutPostRedisplay();
 }
 
-
-
 void mainSubWindow()
 {
 	glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_RIGHT);
 	glui->set_main_gfx_window(main_window);
-	//glui->set_glutKeyboardFunc(myGlutKeyboard);
-
-	
 
 	GLUI_Panel *instructions_panel = glui->add_panel("Instructions");
 
@@ -751,11 +756,14 @@ main(int argc, char **argv)
 	GLUI_Master.set_glutIdleFunc(myGlutIdle);
 	GLUI_Master.set_glutKeyboardFunc(myGlutKeyboard);
 	GLUI_Master.set_glutMouseFunc(mouse);
+	atexit(myGlutClose);
 	glutMotionFunc(motion);
-	
+
 	myGlutInit();
 
 	initializeQuerySets();	
+
+	outputWriter = CsvWriter("MasterFileName.csv");
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glClearColor(0.2, 0.2, 0.2, 1.0);

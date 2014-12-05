@@ -75,10 +75,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CsvWriter.cpp" />
     <ClCompile Include="QueryDisplay.cpp" />
     <ClCompile Include="QuerySet.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CsvWriter.h" />
     <ClInclude Include="dirent.h" />
     <ClInclude Include="glui.h" />
     <ClInclude Include="glut.h" />

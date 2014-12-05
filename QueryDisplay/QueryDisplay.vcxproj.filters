@@ -30,12 +30,18 @@
     <ClInclude Include="QuerySet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CsvWriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QueryDisplay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="QuerySet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvWriter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
