@@ -1547,7 +1547,8 @@ public:
     /*
       void set_glutDisplayFunc(void (*f)(void));
       void set_glutReshapeFunc(void (*f)(int width, int height));
-      void set_glutKeyboardFunc(void (*f)(unsigned char key, int x, int y));
+      */
+	  void set_glutKeyboardFunc(void (*f)(unsigned char key, int x, int y));/*
       void set_glutSpecialFunc(void (*f)(int key, int x, int y));
       void set_glutMouseFunc(void (*f)(int button, int state, int x, int y));
       void set_glutMotionFunc(void (*f)(int x, int y));

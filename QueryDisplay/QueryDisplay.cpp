@@ -600,10 +600,15 @@ void glui_cb(int control)
 	glutPostRedisplay();
 }
 
+
+
 void mainSubWindow()
 {
 	glui = GLUI_Master.create_glui_subwindow(main_window, GLUI_SUBWINDOW_RIGHT);
 	glui->set_main_gfx_window(main_window);
+	//glui->set_glutKeyboardFunc(myGlutKeyboard);
+
+	
 
 	GLUI_Panel *instructions_panel = glui->add_panel("Instructions");
 
@@ -747,7 +752,7 @@ main(int argc, char **argv)
 	GLUI_Master.set_glutKeyboardFunc(myGlutKeyboard);
 	GLUI_Master.set_glutMouseFunc(mouse);
 	glutMotionFunc(motion);
-
+	
 	myGlutInit();
 
 	initializeQuerySets();	
