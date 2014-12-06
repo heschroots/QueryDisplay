@@ -23,12 +23,14 @@ class QuerySet
 	  int nextGuess;   //
 	  ProtoImageType protoImage;
 	  ImageLocationType protoImageLocation;
+	  char correctIDResponse;
 
 	  QuerySet(std::string base_configuration, std::string change_dimension, CsvWriter* writer);
 	  std::string getImageName();
 	  std::string getProtoImageName();
 	  void getImageFileNames(std::string &leftImage, std::string &rightImage);
 	  void processAnswer(char answer);
+	  void generateCorrectIDResponse();
 
 private:
 	void generateNewProtoImage();

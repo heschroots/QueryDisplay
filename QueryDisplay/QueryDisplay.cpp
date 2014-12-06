@@ -82,7 +82,12 @@ const typedef enum{
 	PAPER_ROCK,
 	PAPER_SCISSOR,
 	SCISSOR_ROCK,
-	SCISSOR_PAPER
+	SCISSOR_PAPER,
+	ROCK_THUMB,
+	ROCK_INDEX,
+	ROCK_MIDDLE,
+	ROCK_RING,
+	ROCK_PINKY
 }QuerySetType;
 
 TIFFRGBAImage img;
@@ -495,6 +500,22 @@ void addQuerySet(int num)
 	case SCISSOR_PAPER:
 		querySets.push_back(new QuerySet("scissor","paper", &outputWriter));
 		break;
+	case ROCK_THUMB:
+		querySets.push_back(new QuerySet("rock","thumbOut", &outputWriter));
+		break;
+	case ROCK_INDEX:
+		querySets.push_back(new QuerySet("rock","indexOut", &outputWriter));
+		break;
+	case ROCK_MIDDLE:
+		querySets.push_back(new QuerySet("rock","middleOut", &outputWriter));
+		break;
+	case ROCK_RING:
+		querySets.push_back(new QuerySet("rock","ringOut", &outputWriter));
+		break;
+	case ROCK_PINKY:
+		querySets.push_back(new QuerySet("rock","pinkyOut", &outputWriter));
+		break;			
+
 	}
 }
 
@@ -505,14 +526,14 @@ void initializeQuerySets()
 	std::map<int, int> queryMap;
 
 	//generate a random int. This int corresponds to the QuerySet enumType
-	int numQuerySets = 6;
+	int numQuerySets = 11;
 	srand( time(NULL) );
 	int randomNum;
 
 	int numCount = 0;
 	while(querySetPtrs.size() < numQuerySets * 8)
 	{
-		randomNum = rand() % numQuerySets; //some number between 0 and 5
+		randomNum = rand() % numQuerySets; //some number between 0 and 10
 		if(queryMap.count(randomNum)) // && queryMap.count(randomNum) < 8 ) // we only want 8 pointers per query set
 		{
 			//this particular Query has already been added 

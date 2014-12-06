@@ -3,6 +3,11 @@
 #include <sstream>
 #include "QuerySet.h"
 
+#define RIGHT_IMAGE_WON 'm'
+#define LEFT_IMAGE_WON 'z'
+#define BOTH_IMAGES_TIE 't'
+#define NOT_SURE '\n'
+
 using namespace std;
 
 //QuerySet Constructor
@@ -20,6 +25,38 @@ QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter
 			myWriter = writer;
 }
 
+
+//Method that sets correctIDResponse to a char, corresponding to the keyboard input indicating that symbol has been correctly interpreted
+enum outcomes{WIN, LOSE, TIE};
+void QuerySet::generateCorrectIDResponse(){
+	
+	outcomes outcome;
+		 if((base_configuration == "paper") && (protoImage == PROTO_ROCK)){ outcome = WIN;}
+	else if((base_configuration == "paper") && (protoImage == PROTO_PAPER)){ outcome = TIE;}
+	else if((base_configuration == "paper") && (protoImage == PROTO_SCISSOR)){ outcome = LOSE;}
+
+	else if((base_configuration == "scissor") && (protoImage == PROTO_ROCK)){ outcome = LOSE;}
+	else if((base_configuration == "scissor") && (protoImage == PROTO_PAPER)){ outcome = WIN;}
+	else if((base_configuration == "scissor") && (protoImage == PROTO_SCISSOR)){ outcome = TIE;}
+
+	else if((base_configuration == "rock") && (protoImage == PROTO_ROCK)){ outcome = TIE;}
+	else if((base_configuration == "rock") && (protoImage == PROTO_PAPER)){ outcome = LOSE;}
+	else if((base_configuration == "rock") && (protoImage == PROTO_SCISSOR)){ outcome = WIN;}
+
+
+	char theResponse = 'x';
+		 if (outcome == WIN && protoImageLocation == PROTO_IMAGE_ON_LEFT){ theResponse = RIGHT_IMAGE_WON;}
+	else if (outcome == WIN && protoImageLocation == PROTO_IMAGE_ON_RIGHT){ theResponse = LEFT_IMAGE_WON;}
+
+	else if (outcome == LOSE && protoImageLocation == PROTO_IMAGE_ON_LEFT){ theResponse = LEFT_IMAGE_WON;}
+	else if (outcome == LOSE && protoImageLocation == PROTO_IMAGE_ON_RIGHT){ theResponse = RIGHT_IMAGE_WON;}
+
+	else if (outcome == TIE){ theResponse = BOTH_IMAGES_TIE;}
+
+	this->correctIDResponse = theResponse;
+
+}
+
 //Method to be called that will updated lowerBound, upperBound, and nextGuess when new information
 //has been collected from the user. The information processed will correspond to the point specified
 //by the prior value of nextGuess. If the method is passed True, the this point was correctly identified
@@ -27,34 +64,24 @@ QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter
 //the value of upperBound is replaced by nextGuess's value. Finally, the new value of nextGuess must be computed
 void QuerySet::processAnswer(char answer){
 
-	bool gestureIdenifiedCorrectly;
-	string answerString;
-	switch(answer)
-	{
-	case 'z':
-		gestureIdenifiedCorrectly = false;
-		answerString = "LeftWins";
-		write(answer, answerString);
-		break;
-	case 'm':
+	bool gestureIdenifiedCorrectly = false;
+	string answerString= "Incorrect_ID";
+
+		//if(answer != RIGHT_IMAGE_WON && answer != LEFT_IMAGE_WON && answer != BOTH_IMAGES_TIE && answer != NOT_SURE){}; // user hit a bad key
+
+	if (answer == correctIDResponse){
 		gestureIdenifiedCorrectly = true;
-		answerString = "RightWins";
-		write(answer, answerString);
-		break;
-	case 't':
-		gestureIdenifiedCorrectly = false;
-		answerString = "Tie";
-		write(answer, answerString);
-		break;
-	case 32: //space
-		gestureIdenifiedCorrectly = false;
-		answerString = "IDK";
-		write(answer, answerString);
-		break;
+		answerString = "Correct_ID";
 	}
+
+	write(answer, answerString);
+
+
+	
 
 	if(gestureIdenifiedCorrectly){
 		lowerBound = nextGuess;
+		std::cout<<"correct"<<endl;
 	}else{
 		upperBound = nextGuess;
 	}
@@ -127,6 +154,9 @@ void QuerySet::generateProtoImageLocation(){
 		protoImageLocation = PROTO_IMAGE_ON_LEFT;
 	else
 		protoImageLocation = PROTO_IMAGE_ON_RIGHT;
+
+	generateCorrectIDResponse();
+
 }
 
 void QuerySet::write(char answer, string answerString)
