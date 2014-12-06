@@ -346,8 +346,8 @@ mouse(int button, int state, int x, int y)
   if (button == GLUT_LEFT_BUTTON) {
     if (state == GLUT_DOWN) {
 
-		 std::cout << "Main Window is " << main_window << std::endl;
-		 std::cout << "Current Window " << glutGetWindow() << std::endl;
+		 //std::cout << "Main Window is " << main_window << std::endl;
+		 //std::cout << "Current Window " << glutGetWindow() << std::endl;
     } else {
 
       /* Left mouse button released; unset "moving" since button no longer
@@ -431,25 +431,25 @@ myGlutKeyboard(unsigned char key, int x, int y)
 			std::cout << "T: "  << "Already answered or not Waiting for answer " <<std::endl;
 		}
 		break;
-	case 13: //enter
+	case 32: //space
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer(char(13));
+			querySetPtrs.at(querySetIdx)->processAnswer(char(32));
 			generateNewQuerySetIdx();
-			std::cout << "ENTER pressed" <<std::endl;
+			std::cout << "SPACE pressed" <<std::endl;
 			waitingForAnswer = false;
 		}
 		else
 		{
-			std::cout << "ENTER: "  << "Already answered or not Waiting for answer " <<std::endl;
+			std::cout << "SPACE: "  << "Already answered or not Waiting for answer " <<std::endl;
 		}
 		break;
 	// quit
-	case 27: 
-	case 'q':
-	case 'Q':
-		exit(0);
-		break;
+	//case 27: 
+	//case 'q':
+	//case 'Q':
+		//exit(0);
+		//break;
 	}
 	glutPostRedisplay();
 }

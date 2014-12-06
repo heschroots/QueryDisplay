@@ -20,8 +20,10 @@ CsvWriter::CsvWriter(string outFileName)
 		<< delim
 		<< "ProtoImageLocation"
 		<< delim
-		<< "Answer" 
+		<< "AnswerInput" 
 		<< delim 
+		<< "AnswerString"
+		<< delim
 		<< "LowerBound"
 		<< delim
 		<< "UpperBound"

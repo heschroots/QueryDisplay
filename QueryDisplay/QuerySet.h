@@ -33,7 +33,7 @@ class QuerySet
 private:
 	void generateNewProtoImage();
 	void generateProtoImageLocation();
-	void write(char asnwer);
+	void write(char asnwer, string answerString);
 
 	CsvWriter* myWriter;
 };

@@ -28,19 +28,28 @@ QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter
 void QuerySet::processAnswer(char answer){
 
 	bool gestureIdenifiedCorrectly;
+	string answerString;
 	switch(answer)
 	{
 	case 'z':
 		gestureIdenifiedCorrectly = false;
+		answerString = "LeftWins";
+		write(answer, answerString);
 		break;
 	case 'm':
 		gestureIdenifiedCorrectly = true;
+		answerString = "RightWins";
+		write(answer, answerString);
 		break;
 	case 't':
 		gestureIdenifiedCorrectly = false;
+		answerString = "Tie";
+		write(answer, answerString);
 		break;
-	case 13: //Enter Key
+	case 32: //space
 		gestureIdenifiedCorrectly = false;
+		answerString = "IDK";
+		write(answer, answerString);
 		break;
 	}
 
@@ -50,8 +59,6 @@ void QuerySet::processAnswer(char answer){
 		upperBound = nextGuess;
 	}
 	nextGuess = (int)floor((lowerBound + upperBound )/ 2.0);
-
-	write(answer);
 
 	//Identify new proto image
 	generateNewProtoImage();
@@ -122,23 +129,32 @@ void QuerySet::generateProtoImageLocation(){
 		protoImageLocation = PROTO_IMAGE_ON_RIGHT;
 }
 
-void QuerySet::write(char answer)
+void QuerySet::write(char answer, string answerString)
 {
 	stringstream os;
 	string location;
+	string answerChartoString;
 	char delim = ',';
 
 	if(protoImageLocation)
 		location = "Right";
 	else 
 		location = string("Left");
+
+	if(answer == 32)
+		answerChartoString = "";
+	else
+		answerChartoString = string(&answer);
+
 	os << getImageName()
 	   << delim
 	   << getProtoImageName()
 	   << delim
 	   << location
 	   << delim
-	   << answer
+	   << answerChartoString
+	   << delim
+	   << answerString
 	   << delim
 	   << lowerBound
 	   << delim
