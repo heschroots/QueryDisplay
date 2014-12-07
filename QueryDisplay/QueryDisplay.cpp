@@ -90,6 +90,7 @@ const typedef enum{
 	ROCK_PINKY
 }QuerySetType;
 
+
 TIFFRGBAImage img;
 uint32 *raster;
 size_t npixels;
@@ -113,6 +114,8 @@ int imgCount=0;
 std::vector<QuerySet*> querySets;
 std::vector<QuerySet*> querySetPtrs;
 int querySetIdx = 0;
+SamplingProcedureType samplingProcedure = SIMPLE_UPDOWN_STAIRCASE;//BINARY_SEARCH;
+
 
 static CsvWriter outputWriter;
 static bool firstTime = false;
@@ -253,9 +256,26 @@ int openFile(const char* mfilename)
 
 void generateNewQuerySetIdx()
 {
-	querySetIdx++; // = rand() % 6;
-	if(querySetIdx > 47)
-		exit(1);
+
+	if(samplingProcedure == BINARY_SEARCH){
+		querySetIdx++; // = rand() % 6;
+		if(querySetIdx > 47)
+			exit(1);
+		}
+	else if(samplingProcedure == SIMPLE_UPDOWN_STAIRCASE){
+		bool temp = true;
+		QuerySet* currentQS;
+		while (temp == true){ //go until we've found a n
+			 querySetIdx = rand() % querySetPtrs.size();
+			 currentQS = querySetPtrs.at(querySetIdx);
+			 temp = currentQS->isFinished;
+			 if (temp == true)
+				querySetPtrs.erase(querySetPtrs.begin()+(querySetIdx));
+			 if (!querySetPtrs.size())
+				 exit(1);
+		}
+	
+	}
 }
 /* If resize is called, enable drawing into the full screen area
    (glViewport). Then setup the modelview and projection matrices to map 2D
@@ -283,6 +303,8 @@ void drawHands() //std::string filename1, std::string filename2)
 	std::string rightImage;
 
 	QuerySet* currentQS = querySetPtrs.at(querySetIdx);
+
+
 	std::cout << "Query IDX " << querySetIdx << std::endl;
 	currentQS->getImageFileNames(leftImage, rightImage);
 
@@ -483,37 +505,37 @@ void addQuerySet(int num)
 	switch(num)
 	{
 	case ROCK_PAPER:
-		querySets.push_back(new QuerySet("rock","paper", &outputWriter));
+		querySets.push_back(new QuerySet("rock","paper", &outputWriter, samplingProcedure));
 		break;
 	case ROCK_SCISSOR:
-		querySets.push_back(new QuerySet("rock","scissor", &outputWriter));
+		querySets.push_back(new QuerySet("rock","scissor", &outputWriter, samplingProcedure));
 		break;
 	case PAPER_ROCK:
-		querySets.push_back(new QuerySet("paper","rock", &outputWriter));
+		querySets.push_back(new QuerySet("paper","rock", &outputWriter, samplingProcedure));
 		break;
 	case PAPER_SCISSOR:
-		querySets.push_back(new QuerySet("paper","scissor", &outputWriter));
+		querySets.push_back(new QuerySet("paper","scissor", &outputWriter, samplingProcedure));
 		break;
 	case SCISSOR_ROCK:
-		querySets.push_back(new QuerySet("scissor","rock", &outputWriter));
+		querySets.push_back(new QuerySet("scissor","rock", &outputWriter, samplingProcedure));
 		break;
 	case SCISSOR_PAPER:
-		querySets.push_back(new QuerySet("scissor","paper", &outputWriter));
+		querySets.push_back(new QuerySet("scissor","paper", &outputWriter, samplingProcedure));
 		break;
 	case ROCK_THUMB:
-		querySets.push_back(new QuerySet("rock","thumbOut", &outputWriter));
+		querySets.push_back(new QuerySet("rock","thumbOut", &outputWriter, samplingProcedure));
 		break;
 	case ROCK_INDEX:
-		querySets.push_back(new QuerySet("rock","indexOut", &outputWriter));
+		querySets.push_back(new QuerySet("rock","indexOut", &outputWriter, samplingProcedure));
 		break;
 	case ROCK_MIDDLE:
-		querySets.push_back(new QuerySet("rock","middleOut", &outputWriter));
+		querySets.push_back(new QuerySet("rock","middleOut", &outputWriter, samplingProcedure));
 		break;
 	case ROCK_RING:
-		querySets.push_back(new QuerySet("rock","ringOut", &outputWriter));
+		querySets.push_back(new QuerySet("rock","ringOut", &outputWriter, samplingProcedure));
 		break;
 	case ROCK_PINKY:
-		querySets.push_back(new QuerySet("rock","pinkyOut", &outputWriter));
+		querySets.push_back(new QuerySet("rock","pinkyOut", &outputWriter, samplingProcedure));
 		break;			
 
 	}
@@ -521,38 +543,57 @@ void addQuerySet(int num)
 
 void initializeQuerySets()
 {
-	//To esnure we don't add the same query set twice, well keep a hash
-	//of which query sets we've already added
-	std::map<int, int> queryMap;
+	if (samplingProcedure == BINARY_SEARCH){
+		//To esnure we don't add the same query set twice, well keep a hash
+		//of which query sets we've already added
+		std::map<int, int> queryMap;
 
-	//generate a random int. This int corresponds to the QuerySet enumType
-	int numQuerySets = 11;
-	srand( time(NULL) );
-	int randomNum;
+		//generate a random int. This int corresponds to the QuerySet enumType
+		int numQuerySets = 11; 
+		srand( time(NULL) );
+		int randomNum;
 
-	int numCount = 0;
-	while(querySetPtrs.size() < numQuerySets * 8)
-	{
-		randomNum = rand() % numQuerySets; //some number between 0 and 10
-		if(queryMap.count(randomNum)) // && queryMap.count(randomNum) < 8 ) // we only want 8 pointers per query set
+		int numCount = 0;
+		while(querySetPtrs.size() < numQuerySets * 8)
 		{
-			//this particular Query has already been added 
-			//but there are less than 8 of them
-			int val = queryMap.at(randomNum);
+			randomNum = rand() % numQuerySets; //some number between 0 and 10
+			if(queryMap.count(randomNum)) // && queryMap.count(randomNum) < 8 ) // we only want 8 pointers per query set
+			{
+				//this particular Query has already been added 
+				//but there are less than 8 of them
+				int val = queryMap.at(randomNum);
 
-			querySetPtrs.push_back(querySets.at(val));
+				querySetPtrs.push_back(querySets.at(val));
 
-		} else {
-			//add new querySet
-			addQuerySet(randomNum);
-			queryMap.insert(std::map<int, int>::value_type(randomNum, querySets.size()-1));
-			querySetPtrs.push_back(querySets.at(querySets.size()-1));
-			//numCount++;
-			//std::cout << "New query set added " << numCount << std::endl;
+			} else {
+				//add new querySet
+				addQuerySet(randomNum);
+				queryMap.insert(std::map<int, int>::value_type(randomNum, querySets.size()-1));
+				querySetPtrs.push_back(querySets.at(querySets.size()-1));
+				//numCount++;
+				//std::cout << "New query set added " << numCount << std::endl;
+			}
 		}
-	}
-}
+	}else if(samplingProcedure == SIMPLE_UPDOWN_STAIRCASE){
+		//in the case of SIMPLE_UPDOWN_STAIRCASE sampling, we must terminate after we've collected a certain number of 'pivot points'. 
+		//the number of queries required to get them may change from queryset to queryset, so we can't just create a vector of the order we will sample them in.
+		//Instead, each query set has a member, isFinished, that is set to true when it has collected enough pivot points. Therefore, querySetPtrs will simply contain
+		//one pointer to each querySet, and will randomly choose one until it finds one where isFinished is not set to true.
+		std::map<int, int> queryMap;
 
+		int numQuerySets = 11; 
+		srand( time(NULL) );
+		int randomNum;	
+		int numCount = 0;	
+
+		//addQuerySet(0);
+		//querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		//addQuerySet(7);
+		//querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		addQuerySet(3);
+		querySetPtrs.push_back(querySets.at(querySets.size()-1));
+	};
+}
 // some controls generate a callback when they are changed
 void glui_cb(int control)
 {

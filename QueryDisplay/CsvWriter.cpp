@@ -14,7 +14,9 @@ CsvWriter::CsvWriter(string outFileName)
 
 	char delim = ',';
 	//output header
-	os << "QueryFileName"
+	os << "Row_ID"
+		<< delim
+		<< "QueryFileName"
 		<< delim
 		<< "ProtoImageName"
 		<< delim
@@ -27,6 +29,14 @@ CsvWriter::CsvWriter(string outFileName)
 		<< "LowerBound"
 		<< delim
 		<< "UpperBound"
+		<< delim
+		<< "BaseConfiguration"
+		<< delim
+		<< "AmountOfChange"
+		<< delim
+		<< "ChangeDimension"
+		<< delim
+		<< "IsPivotPoint"
 		<< '\n';
 }
 

@@ -8,15 +8,40 @@
 #define BOTH_IMAGES_TIE 't'
 #define NOT_SURE '\n'
 
+
 using namespace std;
 
 //QuerySet Constructor
-QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter* writer){
+QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter* writer, SamplingProcedureType samplingProcedure){
 			this->base_configuration = base_configuration;
 			this->change_dimension = change_dimension;
-			this->lowerBound = 0;
-			this->upperBound = 100;
-			this->nextGuess = 50;
+
+			this->samplingProcedure = samplingProcedure; //BINARY_SEARCH or SIMPLE_UPDOWN_STAIRCASE;
+
+			if (this->samplingProcedure == BINARY_SEARCH){
+				this->lowerBound = 0;
+				this->upperBound = 100;
+				this->nextGuess = 50;
+			}
+		
+			if (this->samplingProcedure == SIMPLE_UPDOWN_STAIRCASE){
+				this->nextGuess = 0;
+				this->lastPointRecognized = true;
+				this->totalPivotsIdentified = 0;
+				this->isFinished = false;
+				this->currentStepSize = 0;
+				this->currentStepPivotsFound = 0;
+
+				this->stepSizes[0] = 15;
+				this->stepSizes[1] = 5;
+				this->stepSizes[2] = 2;
+
+				this->pivotsPerStepSize[0] = 1;
+				this->pivotsPerStepSize[1] = 2;
+				this->pivotsPerStepSize[2] = 2;
+				this->totalPivotPointsNeeded = 5; //needs to be the sum of all the pivotsPerStepSize values
+			}
+
 
 			//seed random number generator
 			srand( time(NULL) );
@@ -28,6 +53,7 @@ QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter
 
 //Method that sets correctIDResponse to a char, corresponding to the keyboard input indicating that symbol has been correctly interpreted
 enum outcomes{WIN, LOSE, TIE};
+
 void QuerySet::generateCorrectIDResponse(){
 	
 	outcomes outcome;
@@ -63,29 +89,84 @@ void QuerySet::generateCorrectIDResponse(){
 //and the value of lowerBound is replaced by nextGuess's value. If the point was incorrectly identified,
 //the value of upperBound is replaced by nextGuess's value. Finally, the new value of nextGuess must be computed
 void QuerySet::processAnswer(char answer){
-
+	int currentGuess = nextGuess;
+	bool isPivotPoint = false;
 	bool gestureIdenifiedCorrectly = false;
+
 	string answerString= "Incorrect_ID";
-
-		//if(answer != RIGHT_IMAGE_WON && answer != LEFT_IMAGE_WON && answer != BOTH_IMAGES_TIE && answer != NOT_SURE){}; // user hit a bad key
-
 	if (answer == correctIDResponse){
 		gestureIdenifiedCorrectly = true;
 		answerString = "Correct_ID";
 	}
 
-	write(answer, answerString);
+
 
 
 	
-
-	if(gestureIdenifiedCorrectly){
-		lowerBound = nextGuess;
-		std::cout<<"correct"<<endl;
-	}else{
-		upperBound = nextGuess;
+	if(this->samplingProcedure == BINARY_SEARCH){
+		if(gestureIdenifiedCorrectly){
+			lowerBound = nextGuess;
+			std::cout<<"correct"<<endl;
+		}else{
+			upperBound = nextGuess;
+		}
+		nextGuess = (int)floor((lowerBound + upperBound )/ 2.0);
 	}
-	nextGuess = (int)floor((lowerBound + upperBound )/ 2.0);
+
+	if(this->samplingProcedure == SIMPLE_UPDOWN_STAIRCASE){
+
+
+		//first, check to see if this is a pivot point.
+		if((gestureIdenifiedCorrectly && !lastPointRecognized) || (!gestureIdenifiedCorrectly && lastPointRecognized))
+			isPivotPoint = true;
+
+		std::cout<<int(gestureIdenifiedCorrectly)<<endl;
+		
+		if(isPivotPoint) //otherwise it is a pivot point
+		{
+			std::cout<<"PivotPoint"<<endl;
+			//add it to our array of pivot points
+			pivotValues[totalPivotsIdentified] = currentGuess;
+			totalPivotsIdentified++;
+			currentStepPivotsFound++;
+
+			//if this was the last pivot point needed, then mark this query set as done
+			if(currentStepPivotsFound == totalPivotPointsNeeded)
+			{
+				isFinished = true;
+					write(answer, answerString, this->base_configuration, currentGuess, this->change_dimension, isPivotPoint);
+				return ;
+			}
+
+
+			//otherwise, if this was the last pivot point needed for the step size, go to the next step size
+			if(currentStepPivotsFound == pivotsPerStepSize[currentStepSize]){
+				currentStepSize++;
+			}
+		}
+			//Now that we are certain we will use the correct step size, increment or decrement the current guess to get the next one 
+
+		//if pivot point and last point was correctly recognized, increase difficutly
+		if(gestureIdenifiedCorrectly){
+			nextGuess = currentGuess + stepSizes[currentStepSize];
+			lastPointRecognized = true;
+		}else{
+			nextGuess = currentGuess - stepSizes[currentStepSize];
+			lastPointRecognized = false;
+		}
+
+		//boundary conditions for nextGuess
+		if(nextGuess > 100){
+			write(answer, answerString, this->base_configuration, currentGuess, this->change_dimension, isPivotPoint);
+			isFinished = true; //mark as finished, because apparently no change in this dimension matters whatsoever.
+		}
+		else if (nextGuess < 0)
+			nextGuess = 0;
+
+
+	
+	}
+	write(answer, answerString, this->base_configuration, currentGuess, this->change_dimension, isPivotPoint);
 
 	//Identify new proto image
 	generateNewProtoImage();
@@ -159,7 +240,8 @@ void QuerySet::generateProtoImageLocation(){
 
 }
 
-void QuerySet::write(char answer, string answerString)
+	static int row_id = 0;
+void QuerySet::write(char answer, string answerString, string baseConfiguration, int amountOfChange, string changeDimension, bool isPivotPoint)
 {
 	stringstream os;
 	string location;
@@ -176,7 +258,9 @@ void QuerySet::write(char answer, string answerString)
 	else
 		answerChartoString = string(&answer);
 
-	os << getImageName()
+	os << row_id
+	   << delim
+		<< getImageName()
 	   << delim
 	   << getProtoImageName()
 	   << delim
@@ -189,6 +273,14 @@ void QuerySet::write(char answer, string answerString)
 	   << lowerBound
 	   << delim
 	   << upperBound
+	   << delim
+	   << baseConfiguration
+	   << delim
+	   << amountOfChange
+	   << delim
+	   << changeDimension
+	   << delim
+	   << isPivotPoint
 	   << '\n'
 	   << '\0';
 
@@ -196,4 +288,5 @@ void QuerySet::write(char answer, string answerString)
 	os >> output;
 
 	myWriter->write(output);
+	row_id++;
 }
