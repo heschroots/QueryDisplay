@@ -181,9 +181,6 @@ void QuerySet::processAnswer(char answer){
 		}
 		else if (nextGuess < 0)
 			nextGuess = 0;
-
-
-	
 	}
 	write(answer, answerString, this->base_configuration, currentGuess, this->change_dimension, isPivotPoint);
 
@@ -194,17 +191,24 @@ void QuerySet::processAnswer(char answer){
 
 void QuerySet::getImageFileNames(string &leftImage, string &rightImage){
 
-	if(protoImageLocation == PROTO_IMAGE_ON_LEFT)
+	if(queryType == QS_RPS)
 	{
-		leftImage = getProtoImageName();
-		rightImage = getImageName();
+		if(protoImageLocation == PROTO_IMAGE_ON_LEFT)
+		{
+			leftImage = getProtoImageName();
+			rightImage = getImageName();
+		}
+		else
+		{
+			leftImage = getImageName();
+			rightImage = getProtoImageName();
+		}
 	}
-	else
+	else if(queryType == QS_FINGER_COUNT)
 	{
 		leftImage = getImageName();
 		rightImage = getProtoImageName();
 	}
-
 }
 //returns the name of the next image viewed
 string QuerySet::getImageName(void){
@@ -225,7 +229,7 @@ void QuerySet::generateNewProtoImage(){
 	//This corresponds to rock, paper, scissor
 	//map this random number to generate
 	//the rock, paper, or scissors filename
-	int randomNum = rand() % 3; //some int from 0 to 2
+	/*int randomNum = rand() % 3; //some int from 0 to 2
 	switch(randomNum)
 	{
 	case 0:
@@ -240,7 +244,105 @@ void QuerySet::generateNewProtoImage(){
 		protoImage = PROTO_SCISSOR;
 		protoImageName = "scissor.tif";
 		break;
-	}
+	}*/
+
+	int randomNum = rand() % 2; //some int from 0 to 1
+	//we always want the proto image to be of the type that is not the base config or
+	//the change dimension.
+	//we think  this will allow the user to enter more accurate results
+	//since there will be less ambiguity in case the two images are actually a tie
+		     if((base_configuration == "paper") && (change_dimension == "rock")) { protoImage = PROTO_SCISSOR; protoImageName = "scissor.tif";}
+		else if((base_configuration == "paper") && (change_dimension == "scissor")) { protoImage = PROTO_ROCK; protoImageName = "rock.tif";}
+
+		else if((base_configuration == "scissor") && (change_dimension == "rock")) { protoImage = PROTO_PAPER; protoImageName = "paper.tif";}
+		else if((base_configuration == "scissor") && (change_dimension == "paper")) { protoImage = PROTO_ROCK; protoImageName = "rock.tif";}
+
+		else if((base_configuration == "rock") && (change_dimension == "paper")) { protoImage = PROTO_SCISSOR; protoImageName = "scissor.tif";}
+		else if((base_configuration == "rock") && (change_dimension == "scissor")) { protoImage = PROTO_PAPER; protoImageName = "paper.tif";}
+
+		//TODO:
+		//The if/else clause in each one of these is the same
+		//compact it into simpler code
+
+		//Since the change dimension is something like thumbOut
+		//the changing image will essentially always be a rock
+		//So the protoImage can be either one of the other two types.
+		else if((base_configuration == "rock") && (change_dimension == "thumbOut"))
+		{ 
+			//randomly choose right proto so long as it is not rock
+			if(randomNum)
+			{
+				protoImage = PROTO_PAPER;
+				protoImageName = "paper.tif";
+			}
+			else
+			{
+				protoImage = PROTO_SCISSOR;
+				protoImageName = "scissor.tif";
+			}
+		}
+		else if((base_configuration == "rock") && (change_dimension == "indexOut")) 
+		{ 
+			//randomly choose right proto so long as it is not rock
+			if(randomNum)
+			{
+				protoImage = PROTO_PAPER;
+				protoImageName = "paper.tif";
+			}
+			else
+			{
+				protoImage = PROTO_SCISSOR;
+				protoImageName = "scissor.tif";
+			}
+		}
+		else if((base_configuration == "rock") && (change_dimension == "middleOut")) 
+		{
+			//randomly choose right proto so long as it is not rock
+			if(randomNum)
+			{
+				protoImage = PROTO_PAPER;
+				protoImageName = "paper.tif";
+			}
+			else
+			{
+				protoImage = PROTO_SCISSOR;
+				protoImageName = "scissor.tif";
+			}
+		}
+		else if((base_configuration == "rock") && (change_dimension == "ringOut")) 
+		{
+			//randomly choose right proto so long as it is not rock
+			if(randomNum)
+			{
+				protoImage = PROTO_PAPER;
+				protoImageName = "paper.tif";
+			}
+			else
+			{
+				protoImage = PROTO_SCISSOR;
+				protoImageName = "scissor.tif";
+			}
+		}
+		else if((base_configuration == "rock") && (change_dimension == "pinkyOut")) 
+		{ 
+			//randomly choose right proto so long as it is not rock
+			if(randomNum)
+			{
+				protoImage = PROTO_PAPER;
+				protoImageName = "paper.tif";
+			}
+			else
+			{
+				protoImage = PROTO_SCISSOR;
+				protoImageName = "scissor.tif";
+			}
+		}
+		
+		else //this is a finger counting query set and there is no protoimage
+		{
+			protoImageName = "rock.tif";
+			protoImage = PROTO_ROCK;
+		}
 	generateProtoImageLocation();
 }
 
