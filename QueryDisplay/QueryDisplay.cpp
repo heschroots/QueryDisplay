@@ -28,7 +28,6 @@
 #include <map>
 #include <tiffio.h>     /* Sam Leffler's libtiff library. */
 
-
 using namespace std;
 
 //Holds the index to the main window
@@ -50,7 +49,6 @@ int drawInterpolatedSteps;
 int useContraints;
 
 const typedef enum{
-
 	CB_READY_BUTTON,
 	CB_LEFT_SIDE_WON_BUTTON,
 	CB_RIGHT_SIDE_WON_BUTTON,
@@ -83,13 +81,27 @@ const typedef enum{
 	PAPER_SCISSOR,
 	SCISSOR_ROCK,
 	SCISSOR_PAPER,
+
+	//protype modulations
 	ROCK_THUMB,
 	ROCK_INDEX,
 	ROCK_MIDDLE,
 	ROCK_RING,
-	ROCK_PINKY
-}QuerySetType;
+	ROCK_PINKY,
 
+	//Finger Counting
+	FIVE_INDEX_IN,
+	FIVE_MIDDLE_IN,
+	FIVE_RING_IN,
+	FIVE_PINKY_IN,
+	FIVE_THUMB_IN,
+
+	FOUR_INDEX_IN,
+	FOUR_MIDDLE_IN,
+	FOUR_RING_IN,
+	FOUR_PINKY_IN,
+	FOUR_THUMB_IN
+}QuerySetConfigurationType;
 
 TIFFRGBAImage img;
 uint32 *raster;
@@ -115,7 +127,6 @@ std::vector<QuerySet*> querySets;
 std::vector<QuerySet*> querySetPtrs;
 int querySetIdx = 0;
 SamplingProcedureType samplingProcedure = SIMPLE_UPDOWN_STAIRCASE;//BINARY_SEARCH;
-
 
 static CsvWriter outputWriter;
 static bool firstTime = false;
@@ -297,13 +308,39 @@ reshape(int w, int h)
   glBitmap(0, 0, 0, 0, ax, -ay, NULL);
 }
 
-void drawHands() //std::string filename1, std::string filename2)
+void drawSingleHand()
 {
 	std::string leftImage;
 	std::string rightImage;
 
 	QuerySet* currentQS = querySetPtrs.at(querySetIdx);
 
+	std::cout << "Query IDX " << querySetIdx << std::endl;
+	currentQS->getImageFileNames(leftImage, rightImage);
+
+	 /* Clear the color buffer. */
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  	std::string fullPath = filePathName(fileDir, leftImage);
+	openFile(fullPath.c_str());
+
+	std::cout << "IMG: " << leftImage << std::endl;
+
+	glRasterPos2i(imgwidth/4, imgheight/4);
+    /* Re-blit the image. */
+	glDrawPixels(imgwidth, imgheight, GL_RGBA, GL_UNSIGNED_BYTE,
+		 raster);
+
+	glRasterPos2i(0, 0);
+	glutSwapBuffers();
+
+}
+void drawHands() //std::string filename1, std::string filename2)
+{
+	std::string leftImage;
+	std::string rightImage;
+
+	QuerySet* currentQS = querySetPtrs.at(querySetIdx);
 
 	std::cout << "Query IDX " << querySetIdx << std::endl;
 	currentQS->getImageFileNames(leftImage, rightImage);
@@ -323,7 +360,6 @@ void drawHands() //std::string filename1, std::string filename2)
 	glDrawPixels(imgwidth, imgheight, GL_RGBA, GL_UNSIGNED_BYTE,
 		 raster);
 	
-
 	//open Right File
 	fullPath = filePathName(fileDir, rightImage);
 	openFile(fullPath.c_str());
@@ -471,6 +507,72 @@ myGlutKeyboard(unsigned char key, int x, int y)
 			std::cout << "SPACE: "  << "Already answered or not Waiting for answer " <<std::endl;
 		}
 		break;
+	case '0':
+		if(waitingForAnswer)
+		{
+			querySetPtrs.at(querySetIdx)->processAnswer('0');
+			generateNewQuerySetIdx();
+			std::cout << "0 pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+			std::cout << "0: "  << "Already answered or not Waiting for answer " <<std::endl;
+		break;
+	case '1':
+		if(waitingForAnswer)
+		{
+			querySetPtrs.at(querySetIdx)->processAnswer('1');
+			generateNewQuerySetIdx();
+			std::cout << "1 pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+			std::cout << "1: "  << "Already answered or not Waiting for answer " <<std::endl;
+		break;
+	case '2':
+		if(waitingForAnswer)
+		{
+			querySetPtrs.at(querySetIdx)->processAnswer('2');
+			generateNewQuerySetIdx();
+			std::cout << "2 pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+			std::cout << "2: "  << "Already answered or not Waiting for answer " <<std::endl;
+		break;
+	case '3':
+		if(waitingForAnswer)
+		{
+			querySetPtrs.at(querySetIdx)->processAnswer('3');
+			generateNewQuerySetIdx();
+			std::cout << "3 pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+			std::cout << "3: "  << "Already answered or not Waiting for answer " <<std::endl;
+		break;
+	case '4':
+		if(waitingForAnswer)
+		{
+			querySetPtrs.at(querySetIdx)->processAnswer('4');
+			generateNewQuerySetIdx();
+			std::cout << "4 pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+			std::cout << "4: "  << "Already answered or not Waiting for answer " <<std::endl;
+		break;
+	case '5':
+		if(waitingForAnswer)
+		{
+			querySetPtrs.at(querySetIdx)->processAnswer('5');
+			generateNewQuerySetIdx();
+			std::cout << "5 pressed" <<std::endl;
+			waitingForAnswer = false;
+		}
+		else
+			std::cout << "5: "  << "Already answered or not Waiting for answer " <<std::endl;
+		break;
 	// quit
 	//case 27: 
 	//case 'q':
@@ -505,39 +607,57 @@ void addQuerySet(int num)
 	switch(num)
 	{
 	case ROCK_PAPER:
-		querySets.push_back(new QuerySet("rock","paper", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("rock","paper", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case ROCK_SCISSOR:
-		querySets.push_back(new QuerySet("rock","scissor", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("rock","scissor", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case PAPER_ROCK:
-		querySets.push_back(new QuerySet("paper","rock", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("paper","rock", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case PAPER_SCISSOR:
-		querySets.push_back(new QuerySet("paper","scissor", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("paper","scissor", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case SCISSOR_ROCK:
-		querySets.push_back(new QuerySet("scissor","rock", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("scissor","rock", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case SCISSOR_PAPER:
-		querySets.push_back(new QuerySet("scissor","paper", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("scissor","paper", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case ROCK_THUMB:
-		querySets.push_back(new QuerySet("rock","thumbOut", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("rock","thumbOut", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case ROCK_INDEX:
-		querySets.push_back(new QuerySet("rock","indexOut", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("rock","indexOut", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case ROCK_MIDDLE:
-		querySets.push_back(new QuerySet("rock","middleOut", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("rock","middleOut", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case ROCK_RING:
-		querySets.push_back(new QuerySet("rock","ringOut", &outputWriter, samplingProcedure));
+		querySets.push_back(new QuerySet("rock","ringOut", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 	case ROCK_PINKY:
-		querySets.push_back(new QuerySet("rock","pinkyOut", &outputWriter, samplingProcedure));
-		break;			
-
+		querySets.push_back(new QuerySet("rock","pinkyOut", QS_RPS, &outputWriter, samplingProcedure));
+		break;
+	//FINGER COUNTING
+	case FIVE_INDEX_IN:
+		querySets.push_back(new QuerySet("five","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case FIVE_MIDDLE_IN:
+		querySets.push_back(new QuerySet("five","middleIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;	
+	case FIVE_RING_IN:
+		querySets.push_back(new QuerySet("five","ringIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;	
+	case FIVE_PINKY_IN:
+		querySets.push_back(new QuerySet("five","pinkyIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;	
+	case FIVE_THUMB_IN:
+		querySets.push_back(new QuerySet("five","thumbIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case FOUR_INDEX_IN:
+		querySets.push_back(new QuerySet("four","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
 	}
 }
 
@@ -586,11 +706,20 @@ void initializeQuerySets()
 		int randomNum;	
 		int numCount = 0;	
 
-		//addQuerySet(0);
-		//querySetPtrs.push_back(querySets.at(querySets.size()-1));
-		//addQuerySet(7);
-		//querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		//RPS
+		addQuerySet(0);
+		querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		addQuerySet(7);
+		querySetPtrs.push_back(querySets.at(querySets.size()-1));
 		addQuerySet(3);
+		querySetPtrs.push_back(querySets.at(querySets.size()-1));
+
+		//FINGER COUNTING
+		addQuerySet(int(FIVE_INDEX_IN));
+		querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		addQuerySet(int(FIVE_PINKY_IN));
+		querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		addQuerySet(int(FOUR_INDEX_IN));
 		querySetPtrs.push_back(querySets.at(querySets.size()-1));
 	};
 }
@@ -610,15 +739,20 @@ void glui_cb(int control)
 			std::cout << std::endl;
 			showingImages = 1;
 			waitingForAnswer = true;
+			QuerySet* qs = querySetPtrs.at(querySetIdx);
+			
 			auto start = std::chrono::system_clock::now();
-			drawHands();
+			if(qs->queryType == QS_RPS)
+				drawHands();
+			else if(qs->queryType == QS_FINGER_COUNT)
+				drawSingleHand();
 			auto elapsed = 0.0;
 			while( elapsed < 1000)
 			{
 				auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
 				std::chrono::system_clock::now() - start);
 				elapsed = duration.count();
-			}
+			}			
 			//glutSetWindow(main_window);
 			//std::cout << "Current Window " << glutGetWindow() << std::endl;
 			///myGlutIdle();
@@ -828,7 +962,7 @@ main(int argc, char **argv)
 	outputWriter = CsvWriter("MasterFileName.csv");
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glClearColor(0.2, 0.2, 0.2, 1.0);
+  glClearColor(0.0, 0.0, 0.0, 1.0);
   glutMainLoop();
   return 0;             /* ANSI C requires main to return int. */
 }

@@ -19,6 +19,11 @@ typedef enum{
 	SIMPLE_UPDOWN_STAIRCASE
 } SamplingProcedureType;
 
+typedef enum{
+	QS_RPS, //Rock Paper Scissors
+	QS_FINGER_COUNT //FingerCounting
+}QuerySetType;
+
 class QuerySet
 {
    public:
@@ -29,6 +34,7 @@ class QuerySet
 
 	  //members used to display next query and judge user's answer
 	  int nextGuess;   //
+	  QuerySetType queryType;
 	  ProtoImageType protoImage;
 	  ImageLocationType protoImageLocation;
 	  char correctIDResponse;
@@ -50,7 +56,7 @@ class QuerySet
 
 
 
-	  QuerySet(std::string base_configuration, std::string change_dimension, CsvWriter* writer, SamplingProcedureType samplingProcedure);
+	  QuerySet(std::string base_configuration, std::string change_dimension, QuerySetType type, CsvWriter* writer, SamplingProcedureType samplingProcedure);
 	  std::string getImageName();
 	  std::string getProtoImageName();
 	  void getImageFileNames(std::string &leftImage, std::string &rightImage);

@@ -8,14 +8,21 @@
 #define BOTH_IMAGES_TIE 't'
 #define NOT_SURE '\n'
 
+#define ZERO '0'
+#define ONE '1'
+#define TWO '2'
+#define THREE '3'
+#define FOUR '4'
+#define FIVE '5'
 
 using namespace std;
 
 //QuerySet Constructor
-QuerySet::QuerySet(string base_configuration, string change_dimension, CsvWriter* writer, SamplingProcedureType samplingProcedure){
+QuerySet::QuerySet(string base_configuration, string change_dimension, 
+				   QuerySetType type, CsvWriter* writer, SamplingProcedureType samplingProcedure){
 			this->base_configuration = base_configuration;
 			this->change_dimension = change_dimension;
-
+			this->queryType = type;
 			this->samplingProcedure = samplingProcedure; //BINARY_SEARCH or SIMPLE_UPDOWN_STAIRCASE;
 
 			if (this->samplingProcedure == BINARY_SEARCH){
@@ -56,31 +63,43 @@ enum outcomes{WIN, LOSE, TIE};
 
 void QuerySet::generateCorrectIDResponse(){
 	
-	outcomes outcome;
-		 if((base_configuration == "paper") && (protoImage == PROTO_ROCK)){ outcome = WIN;}
-	else if((base_configuration == "paper") && (protoImage == PROTO_PAPER)){ outcome = TIE;}
-	else if((base_configuration == "paper") && (protoImage == PROTO_SCISSOR)){ outcome = LOSE;}
-
-	else if((base_configuration == "scissor") && (protoImage == PROTO_ROCK)){ outcome = LOSE;}
-	else if((base_configuration == "scissor") && (protoImage == PROTO_PAPER)){ outcome = WIN;}
-	else if((base_configuration == "scissor") && (protoImage == PROTO_SCISSOR)){ outcome = TIE;}
-
-	else if((base_configuration == "rock") && (protoImage == PROTO_ROCK)){ outcome = TIE;}
-	else if((base_configuration == "rock") && (protoImage == PROTO_PAPER)){ outcome = LOSE;}
-	else if((base_configuration == "rock") && (protoImage == PROTO_SCISSOR)){ outcome = WIN;}
-
-
 	char theResponse = 'x';
-		 if (outcome == WIN && protoImageLocation == PROTO_IMAGE_ON_LEFT){ theResponse = RIGHT_IMAGE_WON;}
-	else if (outcome == WIN && protoImageLocation == PROTO_IMAGE_ON_RIGHT){ theResponse = LEFT_IMAGE_WON;}
+	if(queryType == QS_RPS)
+	{
+		outcomes outcome;
+			 if((base_configuration == "paper") && (protoImage == PROTO_ROCK)){ outcome = WIN;}
+		else if((base_configuration == "paper") && (protoImage == PROTO_PAPER)){ outcome = TIE;}
+		else if((base_configuration == "paper") && (protoImage == PROTO_SCISSOR)){ outcome = LOSE;}
 
-	else if (outcome == LOSE && protoImageLocation == PROTO_IMAGE_ON_LEFT){ theResponse = LEFT_IMAGE_WON;}
-	else if (outcome == LOSE && protoImageLocation == PROTO_IMAGE_ON_RIGHT){ theResponse = RIGHT_IMAGE_WON;}
+		else if((base_configuration == "scissor") && (protoImage == PROTO_ROCK)){ outcome = LOSE;}
+		else if((base_configuration == "scissor") && (protoImage == PROTO_PAPER)){ outcome = WIN;}
+		else if((base_configuration == "scissor") && (protoImage == PROTO_SCISSOR)){ outcome = TIE;}
 
-	else if (outcome == TIE){ theResponse = BOTH_IMAGES_TIE;}
+		else if((base_configuration == "rock") && (protoImage == PROTO_ROCK)){ outcome = TIE;}
+		else if((base_configuration == "rock") && (protoImage == PROTO_PAPER)){ outcome = LOSE;}
+		else if((base_configuration == "rock") && (protoImage == PROTO_SCISSOR)){ outcome = WIN;}
 
-	this->correctIDResponse = theResponse;
 
+			 if (outcome == WIN && protoImageLocation == PROTO_IMAGE_ON_LEFT){ theResponse = RIGHT_IMAGE_WON;}
+		else if (outcome == WIN && protoImageLocation == PROTO_IMAGE_ON_RIGHT){ theResponse = LEFT_IMAGE_WON;}
+
+		else if (outcome == LOSE && protoImageLocation == PROTO_IMAGE_ON_LEFT){ theResponse = LEFT_IMAGE_WON;}
+		else if (outcome == LOSE && protoImageLocation == PROTO_IMAGE_ON_RIGHT){ theResponse = RIGHT_IMAGE_WON;}
+
+		else if (outcome == TIE){ theResponse = BOTH_IMAGES_TIE;}
+
+		this->correctIDResponse = theResponse;
+	}
+	else if(queryType == QS_FINGER_COUNT)
+	{
+			 if((base_configuration == "one")){ theResponse = ONE; }
+		else if((base_configuration == "two")){ theResponse = TWO;}
+		else if((base_configuration == "three")){ theResponse = THREE;}
+		else if((base_configuration == "four") ){ theResponse = FOUR;}
+		else if((base_configuration == "five") ){ theResponse = FIVE;}
+
+		this->correctIDResponse = theResponse;
+	}
 }
 
 //Method to be called that will updated lowerBound, upperBound, and nextGuess when new information
