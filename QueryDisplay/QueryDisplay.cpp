@@ -75,32 +75,54 @@ const typedef enum{
 }HandConfig;
 
 const typedef enum{
-	ROCK_PAPER,
-	ROCK_SCISSOR,
-	PAPER_ROCK,
-	PAPER_SCISSOR,
-	SCISSOR_ROCK,
-	SCISSOR_PAPER,
+	ROCK_PAPER, //0
+	ROCK_SCISSOR, //1
+	PAPER_ROCK,	//2
+	PAPER_SCISSOR, //3
+	SCISSOR_ROCK,//4
+	SCISSOR_PAPER,//5
 
 	//protype modulations
-	ROCK_THUMB,
-	ROCK_INDEX,
-	ROCK_MIDDLE,
-	ROCK_RING,
-	ROCK_PINKY,
+	ROCK_THUMB,//6
+	ROCK_INDEX,//7
+	ROCK_MIDDLE,//8
+	ROCK_RING,//9
+	ROCK_PINKY,//10
+
+	SCISSOR_THUMB_OUT,//11
+	SCISSOR_INDEX_IN,//12
+	SCISSOR_MIDDLE_IN,//13
+	SCISSOR_RING_OUT,//14
 
 	//Finger Counting
-	FIVE_INDEX_IN,
-	FIVE_MIDDLE_IN,
-	FIVE_RING_IN,
-	FIVE_PINKY_IN,
-	FIVE_THUMB_IN,
 
-	FOUR_INDEX_IN,
-	FOUR_MIDDLE_IN,
-	FOUR_RING_IN,
-	FOUR_PINKY_IN,
-	FOUR_THUMB_IN
+	ONE_INDEX_IN,//15
+	ONE_MIDDLE_IN,//16
+	ONE_THUMB_OUT,//17
+	ONE_RING_OUT,//18
+
+	TWO_INDEX_IN,//15
+	TWO_MIDDLE_IN,//16
+	TWO_THUMB_OUT,//17
+	TWO_RING_OUT,//18
+
+	THREE_THUMB_OUT,//19
+	THREE_INDEX_IN,//20
+	THREE_MIDDLE_IN,//21
+	THREE_RING_IN,//22
+	THREE_PINKY_OUT,//23
+
+	FIVE_INDEX_IN,//24
+	FIVE_MIDDLE_IN,//25
+	FIVE_RING_IN,//26
+	FIVE_PINKY_IN,//27
+	FIVE_THUMB_IN,//28
+
+	FOUR_INDEX_IN,//29
+	FOUR_MIDDLE_IN,//30
+	FOUR_RING_IN,//31
+	FOUR_PINKY_IN,//32
+	FOUR_THUMB_IN//33
 }QuerySetConfigurationType;
 
 TIFFRGBAImage img;
@@ -639,7 +661,66 @@ void addQuerySet(int num)
 	case ROCK_PINKY:
 		querySets.push_back(new QuerySet("rock","pinkyOut", QS_RPS, &outputWriter, samplingProcedure));
 		break;
+	case SCISSOR_INDEX_IN:
+		querySets.push_back(new QuerySet("scissor","indexIn", QS_RPS, &outputWriter, samplingProcedure));
+		break;
+	case SCISSOR_MIDDLE_IN:
+		querySets.push_back(new QuerySet("scissor","middleIn", QS_RPS, &outputWriter, samplingProcedure));
+		break;
+	case SCISSOR_THUMB_OUT:
+		querySets.push_back(new QuerySet("scissor","thumbOut", QS_RPS, &outputWriter, samplingProcedure));
+		break;
+	case SCISSOR_RING_OUT:
+		querySets.push_back(new QuerySet("scissor","ringOut", QS_RPS, &outputWriter, samplingProcedure));
+		break;
+
+
 	//FINGER COUNTING
+	case ONE_INDEX_IN:
+		querySets.push_back(new QuerySet("one","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case ONE_MIDDLE_IN:
+		querySets.push_back(new QuerySet("one","middleOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case ONE_THUMB_OUT:
+		querySets.push_back(new QuerySet("one","thumbOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case ONE_RING_OUT:
+		querySets.push_back(new QuerySet("one","ringOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+
+	case TWO_INDEX_IN:
+		querySets.push_back(new QuerySet("two","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case TWO_MIDDLE_IN:
+		querySets.push_back(new QuerySet("two","middleIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case TWO_THUMB_OUT:
+		querySets.push_back(new QuerySet("two","thumbOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case TWO_RING_OUT:
+		querySets.push_back(new QuerySet("two","ringOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+
+
+	case THREE_INDEX_IN:
+		querySets.push_back(new QuerySet("three","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case THREE_MIDDLE_IN:
+		querySets.push_back(new QuerySet("three","middleIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case THREE_THUMB_OUT:
+		querySets.push_back(new QuerySet("three","thumbOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case THREE_RING_IN:
+		querySets.push_back(new QuerySet("three","ringIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case THREE_PINKY_OUT:
+		querySets.push_back(new QuerySet("three","pinkyOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+
+
+
 	case FIVE_INDEX_IN:
 		querySets.push_back(new QuerySet("five","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
 		break;
@@ -701,26 +782,36 @@ void initializeQuerySets()
 		//one pointer to each querySet, and will randomly choose one until it finds one where isFinished is not set to true.
 		std::map<int, int> queryMap;
 
-		int numQuerySets = 11; 
+ 
 		srand( time(NULL) );
 		int randomNum;	
 		int numCount = 0;	
 
-		//RPS
-		addQuerySet(0);
-		querySetPtrs.push_back(querySets.at(querySets.size()-1));
-		addQuerySet(7);
-		querySetPtrs.push_back(querySets.at(querySets.size()-1));
-		addQuerySet(3);
-		querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		int activeSets[19] = {ROCK_PAPER,
+			ROCK_SCISSOR,
+			PAPER_ROCK,
+			PAPER_SCISSOR,
+			SCISSOR_ROCK,
+			SCISSOR_PAPER,
+			SCISSOR_THUMB_OUT,
+			SCISSOR_MIDDLE_IN,
+			SCISSOR_INDEX_IN,
+			SCISSOR_RING_OUT,
+			ONE_INDEX_IN,
+			ONE_MIDDLE_IN,
+			ONE_RING_OUT,
+			TWO_INDEX_IN,
+			TWO_MIDDLE_IN,
+			TWO_RING_OUT,
+			THREE_INDEX_IN,
+			THREE_MIDDLE_IN,
+			THREE_RING_IN};
 
-		//FINGER COUNTING
-		addQuerySet(int(FIVE_INDEX_IN));
-		querySetPtrs.push_back(querySets.at(querySets.size()-1));
-		addQuerySet(int(FIVE_PINKY_IN));
-		querySetPtrs.push_back(querySets.at(querySets.size()-1));
-		addQuerySet(int(FOUR_INDEX_IN));
-		querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		for (int i = 0; i < 19; i++){
+				addQuerySet(activeSets[i]);
+				querySetPtrs.push_back(querySets.at(querySets.size()-1));
+		}
+
 	};
 }
 // some controls generate a callback when they are changed
