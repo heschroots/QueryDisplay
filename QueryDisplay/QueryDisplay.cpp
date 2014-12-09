@@ -928,14 +928,19 @@ void mainSubWindow()
 	glui->add_statictext("");
 	glui->add_statictext("");
 
-	//Create a panel
-	GLUI_Panel *answers_panel = glui->add_panel("Keyboard Input Answers");
+	//Create a panel for RPS answer
+	GLUI_Panel *answers_panel = glui->add_panel("Rock-Paper-Scissors Keyboard Input");
 
 	glui->add_statictext_to_panel(answers_panel, "           'z' to indicate that the LEFT hand won.       ");
 	glui->add_statictext_to_panel(answers_panel, "           'm' to indicate that the RIGHT hand won       ");
 	glui->add_statictext_to_panel(answers_panel, "           't' to indicate that it was a tie      ");
 	glui->add_statictext_to_panel(answers_panel, "           'ENTER' if you are not sure who won.     ");
 
+	//Create a panel for finger counting answers
+	GLUI_Panel *answers_panel2 = glui->add_panel("Finger-Counting Keyboard Input");
+
+	glui->add_statictext_to_panel(answers_panel2, "           Enter the number 0-5 corresponding       ");
+	glui->add_statictext_to_panel(answers_panel2, "           to the value indicated by hand configuration. ");
 	glui->hide();
 }
 
@@ -964,12 +969,12 @@ void welcomeScreen()
 	welcomeGlui->add_statictext_to_panel(answers_panel, "           'm'       to indicate that the RIGHT hand won       ");
 	welcomeGlui->add_statictext_to_panel(answers_panel, "           't'        to indicate that it was a tie      ");
 	welcomeGlui->add_statictext_to_panel(answers_panel, "       'ENTER'   if you are not sure who won.     ");
-
-	welcomeGlui->add_statictext( "There will be a few practice image to give you an opportunity to get used to the system."); 
     
 	welcomeGlui->add_statictext("");
-	welcomeGlui->add_statictext( "2. Finger Counting, in which a hand will be shows and");
-	welcomeGlui->add_statictext( "you are asked to count how many fingers were held up.");
+	welcomeGlui->add_statictext( "2. Finger Counting");
+	welcomeGlui->add_statictext( "You will be shown a single hand in the middle of the screen.");
+	welcomeGlui->add_statictext( "Use the numbers on your keyboard to input value indicated ");
+	welcomeGlui->add_statictext( "by the hand configuration.");
 	
 	welcomeGlui->add_statictext("");
 	welcomeGlui->add_statictext("");
