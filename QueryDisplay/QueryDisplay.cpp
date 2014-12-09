@@ -38,6 +38,8 @@ GLUI *glui;
 GLUI* msgGlui; 
 GLUI* welcomeGlui;
 GLUI* warningGlui;
+GLUI* breakGlui;
+GLUI* wrongAnswer;
 
 //Live Variables
 int numLinks = 10;
@@ -95,7 +97,6 @@ const typedef enum{
 	SCISSOR_RING_OUT,//14
 
 	//Finger Counting
-
 	ONE_INDEX_IN,//15
 	ONE_MIDDLE_IN,//16
 	ONE_THUMB_OUT,//17
@@ -149,6 +150,7 @@ std::vector<QuerySet*> querySets;
 std::vector<QuerySet*> querySetPtrs;
 int querySetIdx = 0;
 SamplingProcedureType samplingProcedure = SIMPLE_UPDOWN_STAIRCASE;//BINARY_SEARCH;
+QuerySet* currentQS;
 
 static CsvWriter outputWriter;
 static bool firstTime = false;
@@ -362,7 +364,7 @@ void drawHands() //std::string filename1, std::string filename2)
 	std::string leftImage;
 	std::string rightImage;
 
-	QuerySet* currentQS = querySetPtrs.at(querySetIdx);
+	currentQS = querySetPtrs.at(querySetIdx);
 
 	std::cout << "Query IDX " << querySetIdx << std::endl;
 	currentQS->getImageFileNames(leftImage, rightImage);
@@ -472,16 +474,23 @@ motion(int x, int y)
 void 
 myGlutKeyboard(unsigned char key, int x, int y)
 {
+	currentQS = querySetPtrs.at(querySetIdx);
 	switch(key)
 	{
 	case 'z':
 	case 'Z':
+		
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('z');
-			generateNewQuerySetIdx();
-			std::cout << "Z pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_RPS)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('z');
+				generateNewQuerySetIdx();
+				std::cout << "Z pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 		{
@@ -492,10 +501,17 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case 'M':
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('m');
-			generateNewQuerySetIdx();
-			std::cout << "M pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_RPS)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('m');
+				generateNewQuerySetIdx();
+				std::cout << "M pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+			{
+				wrongAnswer->show();
+			}
 		}
 		else
 		{
@@ -504,12 +520,17 @@ myGlutKeyboard(unsigned char key, int x, int y)
 		break;
 	case 't':
 	case 'T':
-		if(waitingForAnswer)
+		if(waitingForAnswer) 
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('t');
-			generateNewQuerySetIdx();
-			std::cout << "T pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_RPS)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('t');
+				generateNewQuerySetIdx();
+				std::cout << "T pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 		{
@@ -519,10 +540,15 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case 32: //space
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer(char(32));
-			generateNewQuerySetIdx();
-			std::cout << "SPACE pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_RPS)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer(char(32));
+				generateNewQuerySetIdx();
+				std::cout << "SPACE pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 		{
@@ -532,10 +558,15 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case '0':
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('0');
-			generateNewQuerySetIdx();
-			std::cout << "0 pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_FINGER_COUNT)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('0');
+				generateNewQuerySetIdx();
+				std::cout << "0 pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 			std::cout << "0: "  << "Already answered or not Waiting for answer " <<std::endl;
@@ -543,10 +574,15 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case '1':
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('1');
-			generateNewQuerySetIdx();
-			std::cout << "1 pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_FINGER_COUNT)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('1');
+				generateNewQuerySetIdx();
+				std::cout << "1 pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 			std::cout << "1: "  << "Already answered or not Waiting for answer " <<std::endl;
@@ -554,10 +590,15 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case '2':
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('2');
-			generateNewQuerySetIdx();
-			std::cout << "2 pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_FINGER_COUNT)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('2');
+				generateNewQuerySetIdx();
+				std::cout << "2 pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 			std::cout << "2: "  << "Already answered or not Waiting for answer " <<std::endl;
@@ -565,10 +606,15 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case '3':
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('3');
-			generateNewQuerySetIdx();
-			std::cout << "3 pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_FINGER_COUNT)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('3');
+				generateNewQuerySetIdx();
+				std::cout << "3 pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 			std::cout << "3: "  << "Already answered or not Waiting for answer " <<std::endl;
@@ -576,10 +622,15 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case '4':
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('4');
-			generateNewQuerySetIdx();
-			std::cout << "4 pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_FINGER_COUNT)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('4');
+				generateNewQuerySetIdx();
+				std::cout << "4 pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 			std::cout << "4: "  << "Already answered or not Waiting for answer " <<std::endl;
@@ -587,10 +638,15 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case '5':
 		if(waitingForAnswer)
 		{
-			querySetPtrs.at(querySetIdx)->processAnswer('5');
-			generateNewQuerySetIdx();
-			std::cout << "5 pressed" <<std::endl;
-			waitingForAnswer = false;
+			if(currentQS->queryType == QS_FINGER_COUNT)
+			{
+				querySetPtrs.at(querySetIdx)->processAnswer('5');
+				generateNewQuerySetIdx();
+				std::cout << "5 pressed" <<std::endl;
+				waitingForAnswer = false;
+			}
+			else
+				wrongAnswer->show();
 		}
 		else
 			std::cout << "5: "  << "Already answered or not Waiting for answer " <<std::endl;
@@ -674,7 +730,6 @@ void addQuerySet(int num)
 		querySets.push_back(new QuerySet("scissor","ringOut", QS_RPS, &outputWriter, samplingProcedure));
 		break;
 
-
 	//FINGER COUNTING
 	case ONE_INDEX_IN:
 		querySets.push_back(new QuerySet("one","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
@@ -718,7 +773,6 @@ void addQuerySet(int num)
 	case THREE_PINKY_OUT:
 		querySets.push_back(new QuerySet("three","pinkyOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
 		break;
-
 
 
 	case FIVE_INDEX_IN:
@@ -782,7 +836,7 @@ void initializeQuerySets()
 		//one pointer to each querySet, and will randomly choose one until it finds one where isFinished is not set to true.
 		std::map<int, int> queryMap;
 
- 
+		int numQuerySets = 11; 
 		srand( time(NULL) );
 		int randomNum;	
 		int numCount = 0;	
@@ -811,7 +865,6 @@ void initializeQuerySets()
 				addQuerySet(activeSets[i]);
 				querySetPtrs.push_back(querySets.at(querySets.size()-1));
 		}
-
 	};
 }
 // some controls generate a callback when they are changed
@@ -869,6 +922,10 @@ void glui_cb(int control)
 	case CB_OK_BUTTON:
 		if(warningGlui)
 			warningGlui->hide();
+		if(breakGlui)
+			breakGlui->hide();
+		if(wrongAnswer)
+			wrongAnswer->hide();
 		break;
 	case CB_NEXT_BUTTON:
 		break;
@@ -907,10 +964,12 @@ void mainSubWindow()
 	//add text to panel
 	glui->add_statictext_to_panel(instructions_panel, "This system will display a series of animated hand gestures.");
 	glui->add_statictext_to_panel(instructions_panel, "There are two categories of hand gestures:");
-	glui->add_statictext_to_panel(instructions_panel, "1. Rock-Paper-Scissors, in which two hand gestures");
-	glui->add_statictext_to_panel(instructions_panel, "will be shown and you will identify the winner.");
-	glui->add_statictext_to_panel(instructions_panel, "2. Finger Counting, in which a hand will be shows and");
-	glui->add_statictext_to_panel(instructions_panel, "you are asked to count how many fingers were held up.");
+	glui->add_statictext("");
+	glui->add_statictext_to_panel(instructions_panel, "      1. Rock-Paper-Scissors, in which two hand gestures");
+	glui->add_statictext_to_panel(instructions_panel, "         will be shown and you will identify the winner.");
+	glui->add_statictext("");
+	glui->add_statictext_to_panel(instructions_panel, "      2. Finger Counting, in which a hand will be shows and");
+	glui->add_statictext_to_panel(instructions_panel, "         you are asked to count how many fingers were held up.");
 	
 	glui->add_statictext("");
 	glui->add_statictext("");
@@ -918,9 +977,8 @@ void mainSubWindow()
 	glui->add_statictext("");
 	glui->add_statictext("");
 
-	GLUI_Panel *controls_panel = glui->add_panel("Controls");
-	//add button to panel
-	glui->add_button_to_panel(controls_panel, "Ready. Show Images", CB_READY_BUTTON, glui_cb);
+	//add button to glui
+	glui->add_button("Ready. Show Images", CB_READY_BUTTON, glui_cb);
 
 	glui->add_statictext("");
 	glui->add_statictext("");
@@ -928,25 +986,30 @@ void mainSubWindow()
 	glui->add_statictext("");
 	glui->add_statictext("");
 
-	//Create a panel for RPS answer
-	GLUI_Panel *answers_panel = glui->add_panel("Rock-Paper-Scissors Keyboard Input");
+	//Create a panel
+	GLUI_Panel *rps_panel = glui->add_panel("Rock Paper Scissor Keyboard Input Answers");
+	glui->add_statictext_to_panel(rps_panel, "           'z' to indicate that the LEFT hand won.       ");
+	glui->add_statictext_to_panel(rps_panel, "           'm' to indicate that the RIGHT hand won       ");
+	glui->add_statictext_to_panel(rps_panel, "           't' to indicate that it was a tie      ");
+	glui->add_statictext_to_panel(rps_panel, "           'SPACE' if you are not sure who won.     ");
 
-	glui->add_statictext_to_panel(answers_panel, "           'z' to indicate that the LEFT hand won.       ");
-	glui->add_statictext_to_panel(answers_panel, "           'm' to indicate that the RIGHT hand won       ");
-	glui->add_statictext_to_panel(answers_panel, "           't' to indicate that it was a tie      ");
-	glui->add_statictext_to_panel(answers_panel, "           'ENTER' if you are not sure who won.     ");
+	glui->add_statictext("");
+	glui->add_statictext("");
 
-	//Create a panel for finger counting answers
-	GLUI_Panel *answers_panel2 = glui->add_panel("Finger-Counting Keyboard Input");
+	GLUI_Panel *finger_panel = glui->add_panel("Finger Counting Input Answers");
+	glui->add_statictext_to_panel(finger_panel, "           '0' if the hand shown represents the number 0.       ");
+	glui->add_statictext_to_panel(finger_panel, "           '1' if the hand shown represents the number 1.       ");
+	glui->add_statictext_to_panel(finger_panel, "           '2' if the hand shown represents the number 2.       ");
+	glui->add_statictext_to_panel(finger_panel, "           '3' if the hand shown represents the number 3.       ");
+	glui->add_statictext_to_panel(finger_panel, "           '4' if the hand shown represents the number 4.       ");
+	glui->add_statictext_to_panel(finger_panel, "           '5' if the hand shown represents the number 5.       ");
 
-	glui->add_statictext_to_panel(answers_panel2, "           Enter the number 0-5 corresponding       ");
-	glui->add_statictext_to_panel(answers_panel2, "           to the value indicated by hand configuration. ");
 	glui->hide();
 }
 
 void welcomeScreen()
 {
-	welcomeGlui = GLUI_Master.create_glui("Instructions",0,0,0);
+	welcomeGlui = GLUI_Master.create_glui("Instructions",0,0+50,0+50);
 	welcomeGlui->set_main_gfx_window(main_window);
 
 	welcomeGlui->add_statictext("");
@@ -963,21 +1026,33 @@ void welcomeScreen()
 	welcomeGlui->add_statictext( "       In RPS you will be shown two hands simultaneously for two seconds. Each hand will be a rock, paper or scissor.");
 	welcomeGlui->add_statictext( "       You are asked to answer which side you think won. Your answer will be input using the keyboard using the following inputs"); 
 	welcomeGlui->add_statictext("");
-	GLUI_Panel *answers_panel = welcomeGlui->add_panel("Keyboard Input Answers");
 
+	GLUI_Panel *answers_panel = welcomeGlui->add_panel("Rock Paper Scissor Keyboard Input Answers");
 	welcomeGlui->add_statictext_to_panel(answers_panel, "           'z'        to indicate that the LEFT hand won.       ");
 	welcomeGlui->add_statictext_to_panel(answers_panel, "           'm'       to indicate that the RIGHT hand won       ");
 	welcomeGlui->add_statictext_to_panel(answers_panel, "           't'        to indicate that it was a tie      ");
-	welcomeGlui->add_statictext_to_panel(answers_panel, "       'ENTER'   if you are not sure who won.     ");
+	welcomeGlui->add_statictext_to_panel(answers_panel, "       'SPACE'   if you are not sure who won.     ");
+
+	//welcomeGlui->add_statictext( "There will be a few practice image to give you an opportunity to get used to the system."); 
     
 	welcomeGlui->add_statictext("");
 	welcomeGlui->add_statictext( "2. Finger Counting");
-	welcomeGlui->add_statictext( "You will be shown a single hand in the middle of the screen.");
-	welcomeGlui->add_statictext( "Use the numbers on your keyboard to input value indicated ");
-	welcomeGlui->add_statictext( "by the hand configuration.");
+	welcomeGlui->add_statictext( "        In Finger Counting you are shown a single image with some number of fingers help up");
+	welcomeGlui->add_statictext( "        You are asked to answer how many finger you think are help up.");
 	
 	welcomeGlui->add_statictext("");
+
+	GLUI_Panel *finger_panel = welcomeGlui->add_panel("Finger Counting Input Answers");
+
+	welcomeGlui->add_statictext_to_panel(finger_panel, "           '0' if the hand shown represents the number 0.       ");
+	welcomeGlui->add_statictext_to_panel(finger_panel, "           '1' if the hand shown represents the number 1.       ");
+	welcomeGlui->add_statictext_to_panel(finger_panel, "           '2' if the hand shown represents the number 2.       ");
+	welcomeGlui->add_statictext_to_panel(finger_panel, "           '3' if the hand shown represents the number 3.       ");
+	welcomeGlui->add_statictext_to_panel(finger_panel, "           '4' if the hand shown represents the number 4.       ");
+	welcomeGlui->add_statictext_to_panel(finger_panel, "           '5' if the hand shown represents the number 5.       ");
+
 	welcomeGlui->add_statictext("");
+	welcomeGlui->add_statictext("This process should only take about 20 minutes. Thank you for your time!");
 	welcomeGlui->add_statictext("");
 	welcomeGlui->add_statictext("");
 
@@ -987,8 +1062,9 @@ void welcomeScreen()
 
 void myGlutInit()
 {
-	//create Message GLUI
-	msgGlui = GLUI_Master.create_glui("Message",0,w_width/2,w_height/2);
+	//Message GLUI asking the user to make sure they understand the instructions
+	//This will pop up only once they click ok on the startup screen
+	msgGlui = GLUI_Master.create_glui("Message",0,w_width/2-100,w_height/2-100);
 	msgGlui->set_main_gfx_window(main_window);
 	msgGlui->add_statictext("Are you sure you understand the instructions?");
 	msgGlui->add_button("Yes", CB_YES_BUTTON, glui_cb);
@@ -997,12 +1073,37 @@ void myGlutInit()
 	msgGlui->add_button("No", CB_NO_BUTTON, glui_cb);
 	msgGlui->hide();
 
-	warningGlui = GLUI_Master.create_glui("Answer Warning",0,w_width/2,w_height/2);
+	//Waning GLUI will show up when user presses the Next Image button
+	//but haven't entered a valid response for the previous image
+	warningGlui = GLUI_Master.create_glui("Answer Warning",0,w_width/2-50,w_height/2-50);
 	warningGlui->set_main_gfx_window(main_window);
+	warningGlui->add_statictext("");
 	warningGlui->add_statictext("You have not submitted an Answer for the previous question.");
 	warningGlui->add_statictext("Please use the keyboard to enter an answer.");
+	warningGlui->add_statictext("");
 	warningGlui->add_button("OK", CB_OK_BUTTON, glui_cb);
 	warningGlui->hide();
+
+	//Break GLUI will show up after 50 images have been shown
+	breakGlui = GLUI_Master.create_glui("Take a break",0,w_width/2+50,w_height/2+50);
+	breakGlui->set_main_gfx_window(main_window);
+	breakGlui->add_statictext("");
+	breakGlui->add_statictext("After a few images you can begin making mistakes.");
+	breakGlui->add_statictext("Take a break if you need to.");
+	breakGlui->add_statictext("");
+	breakGlui->add_button("OK", CB_OK_BUTTON, glui_cb);
+	breakGlui->hide();
+
+	//Wrong Answer GLUI display a message letting the uswer know
+	//That they've 
+	wrongAnswer = GLUI_Master.create_glui("Wrong Answer Type",0,w_width/2+100,w_height/2+100);
+	wrongAnswer->set_main_gfx_window(main_window);
+	wrongAnswer->add_statictext("");
+	wrongAnswer->add_statictext("          You entered an answer but it's of the wrong type. If you saw two images like Rock, Paper           ");
+	wrongAnswer->add_statictext("          or Scissors please use the letter 'z','m', 't', or the spacebar. Otherwise use the number 0-5.     ");
+	wrongAnswer->add_statictext("");
+	wrongAnswer->add_button("OK", CB_OK_BUTTON, glui_cb);
+	wrongAnswer->hide();
 
 	mainSubWindow();
 	welcomeScreen();
