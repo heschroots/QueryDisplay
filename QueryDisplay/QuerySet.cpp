@@ -125,7 +125,7 @@ void QuerySet::processAnswer(char answer){
 	if(this->samplingProcedure == BINARY_SEARCH){
 		if(gestureIdenifiedCorrectly){
 			lowerBound = nextGuess;
-			std::cout<<"correct"<<endl;
+			//std::cout<<"correct"<<endl;
 		}else{
 			upperBound = nextGuess;
 		}
@@ -139,11 +139,11 @@ void QuerySet::processAnswer(char answer){
 		if((gestureIdenifiedCorrectly && !lastPointRecognized) || (!gestureIdenifiedCorrectly && lastPointRecognized))
 			isPivotPoint = true;
 
-		std::cout<<int(gestureIdenifiedCorrectly)<<endl;
+		//std::cout<<int(gestureIdenifiedCorrectly)<<endl;
 		
 		if(isPivotPoint) //otherwise it is a pivot point
 		{
-			std::cout<<"PivotPoint"<<endl;
+			//std::cout<<"PivotPoint"<<endl;
 			//add it to our array of pivot points
 			pivotValues[totalPivotsIdentified] = currentGuess;
 			totalPivotsIdentified++;

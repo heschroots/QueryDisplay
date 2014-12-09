@@ -97,6 +97,21 @@ const typedef enum{
 	SCISSOR_RING_OUT,//14
 
 	//Finger Counting
+	ONE_ZERO,
+	ZERO_ONE,
+	ONE_TWO,
+	TWO_ONE,
+	TWO_THREE,
+	THREE_TWO,
+	THREE_FOUR,
+	FOUR_THREE,
+	FOUR_FIVE,
+	FIVE_FOUR,
+	TWO_FIVE,
+	TWO_ZERO,
+
+
+
 	ONE_INDEX_IN,//15
 	ONE_MIDDLE_IN,//16
 	ONE_THUMB_OUT,//17
@@ -123,7 +138,7 @@ const typedef enum{
 	FOUR_MIDDLE_IN,//30
 	FOUR_RING_IN,//31
 	FOUR_PINKY_IN,//32
-	FOUR_THUMB_IN//33
+	FOUR_THUMB_IN,//33
 }QuerySetConfigurationType;
 
 TIFFRGBAImage img;
@@ -339,7 +354,7 @@ void drawSingleHand()
 
 	QuerySet* currentQS = querySetPtrs.at(querySetIdx);
 
-	std::cout << "Query IDX " << querySetIdx << std::endl;
+	//std::cout << "Query IDX " << querySetIdx << std::endl;
 	currentQS->getImageFileNames(leftImage, rightImage);
 
 	 /* Clear the color buffer. */
@@ -348,7 +363,7 @@ void drawSingleHand()
   	std::string fullPath = filePathName(fileDir, leftImage);
 	openFile(fullPath.c_str());
 
-	std::cout << "IMG: " << leftImage << std::endl;
+	//std::cout << "IMG: " << leftImage << std::endl;
 
 	glRasterPos2i(imgwidth/4, imgheight/4);
     /* Re-blit the image. */
@@ -366,7 +381,7 @@ void drawHands() //std::string filename1, std::string filename2)
 
 	currentQS = querySetPtrs.at(querySetIdx);
 
-	std::cout << "Query IDX " << querySetIdx << std::endl;
+	//std::cout << "Query IDX " << querySetIdx << std::endl;
 	currentQS->getImageFileNames(leftImage, rightImage);
 
 	 /* Clear the color buffer. */
@@ -375,7 +390,7 @@ void drawHands() //std::string filename1, std::string filename2)
   	std::string fullPath = filePathName(fileDir, leftImage);
 	openFile(fullPath.c_str());
 
-	std::cout << "LEFT: " << leftImage << std::endl;
+	//std::cout << "LEFT: " << leftImage << std::endl;
 	//tranformations
 	mirror();
 	rotateRight();
@@ -388,7 +403,7 @@ void drawHands() //std::string filename1, std::string filename2)
 	fullPath = filePathName(fileDir, rightImage);
 	openFile(fullPath.c_str());
 
-	std::cout << "RIGHT: " << rightImage << std::endl;
+	//std::cout << "RIGHT: " << rightImage << std::endl;
 	//transformations
     rotateLeft();
 
@@ -540,7 +555,7 @@ myGlutKeyboard(unsigned char key, int x, int y)
 	case 32: //space
 		if(waitingForAnswer)
 		{
-			if(currentQS->queryType == QS_RPS)
+			if(currentQS->queryType == QS_RPS || currentQS->queryType == QS_FINGER_COUNT )
 			{
 				querySetPtrs.at(querySetIdx)->processAnswer(char(32));
 				generateNewQuerySetIdx();
@@ -757,6 +772,50 @@ void addQuerySet(int num)
 		querySets.push_back(new QuerySet("two","ringOut", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
 		break;
 
+	case ONE_ZERO:
+		querySets.push_back(new QuerySet("one","zero", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case ZERO_ONE:
+		querySets.push_back(new QuerySet("zero","one", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case ONE_TWO:
+		querySets.push_back(new QuerySet("one","two", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case TWO_ONE:
+		querySets.push_back(new QuerySet("two","one", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case TWO_THREE:
+		querySets.push_back(new QuerySet("two","three", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case THREE_TWO:
+		querySets.push_back(new QuerySet("three","two", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case THREE_FOUR:
+		querySets.push_back(new QuerySet("three","four", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case FOUR_THREE:
+		querySets.push_back(new QuerySet("four","three", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case FOUR_FIVE:
+		querySets.push_back(new QuerySet("four","five", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case FIVE_FOUR:
+		querySets.push_back(new QuerySet("five","four", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case TWO_FIVE:
+		querySets.push_back(new QuerySet("two","five", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+	case TWO_ZERO:
+		querySets.push_back(new QuerySet("two","zero", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
+		break;
+
+
+
+
+
+
+
+
 
 	case THREE_INDEX_IN:
 		querySets.push_back(new QuerySet("three","indexIn", QS_FINGER_COUNT, &outputWriter, samplingProcedure));
@@ -847,19 +906,19 @@ void initializeQuerySets()
 			PAPER_SCISSOR,
 			SCISSOR_ROCK,
 			SCISSOR_PAPER,
-			SCISSOR_THUMB_OUT,
-			SCISSOR_MIDDLE_IN,
-			SCISSOR_INDEX_IN,
-			SCISSOR_RING_OUT,
-			ONE_INDEX_IN,
-			ONE_MIDDLE_IN,
-			ONE_RING_OUT,
-			TWO_INDEX_IN,
-			TWO_MIDDLE_IN,
-			TWO_RING_OUT,
-			THREE_INDEX_IN,
-			THREE_MIDDLE_IN,
-			THREE_RING_IN};
+			ONE_ZERO,
+			ZERO_ONE,
+			ONE_TWO,
+			TWO_ONE,
+			TWO_THREE,
+			THREE_TWO,
+			THREE_FOUR,
+			FOUR_THREE,
+			FOUR_FIVE,
+			FIVE_FOUR,
+			TWO_FIVE,
+			TWO_ZERO,
+			TWO_INDEX_IN};
 
 		for (int i = 0; i < 19; i++){
 				addQuerySet(activeSets[i]);
@@ -1003,6 +1062,7 @@ void mainSubWindow()
 	glui->add_statictext_to_panel(finger_panel, "           '3' if the hand shown represents the number 3.       ");
 	glui->add_statictext_to_panel(finger_panel, "           '4' if the hand shown represents the number 4.       ");
 	glui->add_statictext_to_panel(finger_panel, "           '5' if the hand shown represents the number 5.       ");
+	glui->add_statictext_to_panel(finger_panel, "           'SPACE' if you are unsure.       ");
 
 	glui->hide();
 }
