@@ -39,9 +39,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\libtiff-4.0.3\tiff;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\libtiff-4.0.3\;$(IncludePath)</IncludePath>
     <ReferencePath>$(ReferencePath)</ReferencePath>
-    <LibraryPath>$(ProjectDir)\libtiff-4.0.3\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)\libtiff-4.0.3\tiff;$(IncludePath)</IncludePath>

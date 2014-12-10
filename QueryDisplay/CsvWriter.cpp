@@ -8,7 +8,10 @@ CsvWriter::CsvWriter(string outFileName)
 	os.open(outFileName, ios::out);
 
 	if(!os)
+	{
 		std::cout << "Error opening ouput CSV file" << std::endl;
+		exit(1);
+	}
 
 	fileName = outFileName;
 

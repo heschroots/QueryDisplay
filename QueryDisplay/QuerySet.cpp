@@ -6,7 +6,7 @@
 #define RIGHT_IMAGE_WON 'm'
 #define LEFT_IMAGE_WON 'z'
 #define BOTH_IMAGES_TIE 't'
-#define NOT_SURE '\n'
+#define NOT_SURE 32
 
 #define ZERO '0'
 #define ONE '1'
@@ -92,7 +92,8 @@ void QuerySet::generateCorrectIDResponse(){
 	}
 	else if(queryType == QS_FINGER_COUNT)
 	{
-			 if((base_configuration == "one")){ theResponse = ONE; }
+			 if((base_configuration == "zero")){ theResponse = ZERO; }
+		else if((base_configuration == "one")){ theResponse = ONE; }
 		else if((base_configuration == "two")){ theResponse = TWO;}
 		else if((base_configuration == "three")){ theResponse = THREE;}
 		else if((base_configuration == "four") ){ theResponse = FOUR;}
@@ -376,12 +377,14 @@ void QuerySet::write(char answer, string answerString, string baseConfiguration,
 
 	if(answer == 32)
 		answerChartoString = "";
+	else if(answer == '0')
+		answerChartoString = "0";
 	else
 		answerChartoString = string(&answer);
 
 	os << row_id
 	   << delim
-		<< getImageName()
+	   << getImageName()
 	   << delim
 	   << getProtoImageName()
 	   << delim
